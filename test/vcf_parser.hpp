@@ -1,5 +1,4 @@
-#ifndef VCF_PARSER_HPP
-#define VCF_PARSER_HPP
+#pragma once
 
 #include <iostream>
 #include <fstream>
@@ -12,7 +11,7 @@
 
 class VCFParser {
 public:
-    explicit VCFParser(const std::string& filename);
+    VCFParser(const std::string& filename);
     ~VCFParser();
 
     bool hasNext();
@@ -33,5 +32,3 @@ private:
     std::vector<std::string> extractATField(const std::string& infoField);
     std::vector<std::string> split(const std::string& s, char delimiter);
 };
-
-#endif // VCF_PARSER_HPP

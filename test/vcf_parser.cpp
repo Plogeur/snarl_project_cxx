@@ -1,7 +1,7 @@
 #include "vcf_parser.hpp"
 
 // Constructor: Opens the VCF file and parses the header
-VCFParser::VCFParser(const std::string& filename) {
+VCFParser::VCFParser(const std::string& filename) : file(filename) {
     file.open(filename);
     if (!file.is_open()) {
         throw std::runtime_error("Could not open VCF file.");
@@ -24,6 +24,7 @@ bool VCFParser::hasNext() {
 // Reads the next variant from the VCF file
 void VCFParser::nextVariant() {
     std::string line;
+    std::cout << "line : " << line << std::endl;
     if (std::getline(file, line)) {
         parseVariant(line);
     } else {
@@ -49,7 +50,9 @@ const std::vector<std::string>& VCFParser::getSampleNames() const {
 // Parses the VCF header to extract sample names
 void VCFParser::parseHeader() {
     std::string line;
+    std::cout << "huhu" << std::endl;
     while (std::getline(file, line)) {
+        std::cout << "hihi" << std::endl;
         if (line.substr(0, 1) != "#") {
             break; // Stop when we hit the data lines
         }
