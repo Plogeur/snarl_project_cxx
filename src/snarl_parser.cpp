@@ -1,21 +1,5 @@
-#include <iostream>
-#include <string>
-#include <vector>
-#include <utility>
-#include <unordered_map>
-#include <cctype>
+#include "snarl_parser.hpp"
 #include "vcf_parser.hpp"
-
-std::vector<std::string> split(const std::string& str, char delimiter) {
-    std::vector<std::string> tokens;
-    size_t start = 0, end;
-    while ((end = str.find(delimiter, start)) != std::string::npos) {
-        tokens.push_back(str.substr(start, end - start));
-        start = end + 1;
-    }
-    tokens.push_back(str.substr(start));
-    return tokens;
-}
 
 // Function to determine and extract an integer from the string
 std::pair<int, int> determine_str(const std::string& s, int length_s, int i) {
@@ -63,14 +47,18 @@ std::vector<std::vector<std::string> > decompose_snarl(const std::vector<std::st
 // Main function that parses the VCF file and fills the matrix
 void fill_matrix(const std::string& vcf_path) {
     VCFParser vcfParser(vcf_path);  // Create an instance of VCFParser
-    const auto& sampleNames = vcfParser.getSampleNames(); // Accessing sample names
+    const std::vector<std::string>& sampleNames = vcfParser.getSampleNames();
+
+    for (const auto& sampleName : sampleNames) {
+        std::cout << "sampleName : " << sampleName << std::endl;
+    }
 
     // Read and process variants
     while (vcfParser.hasNext()) {
         vcfParser.nextVariant();
 
         // Extract genotypes
-        const auto& genotypes = vcfParser.getGenotypes();
+        const std::vector<std::vector<int> >& genotypes = vcfParser.getGenotypes();
 
         // Extract and split `AT` field from the INFO field
         std::vector<std::string> snarl_list = vcfParser.getATInfo();
@@ -85,7 +73,8 @@ void fill_matrix(const std::string& vcf_path) {
             if (allele_1 == -1 || allele_2 == -1) { // Handle missing genotypes (./.)
                 continue;
             }
-            std::cout << allele_1 << allele_2 << std::endl;
+
+            //std::cout << "genotype : " << allele_1 << " " << allele_2 << std::endl;
         }
 
         for (const auto& snarl : list_list_decomposed_snarl) {
@@ -95,4 +84,10 @@ void fill_matrix(const std::string& vcf_path) {
             std::cout << std::endl;
         }
     }
+}
+
+int main() {
+    std::string vcf_file_path = "big_vcf.vcf";
+    fill_matrix(vcf_file_path);
+    return 0;
 }

@@ -1,6 +1,3 @@
-#ifndef SNARL_PARSER_HPP
-#define SNARL_PARSER_HPP
-
 #pragma once
 
 #include <string>
@@ -23,5 +20,3 @@ std::vector<std::vector<std::string> > decompose_snarl(const std::vector<std::st
 
 // Main function that parses the VCF file and fills the matrix
 void fill_matrix(const std::string& vcf_path);
-
-#endif
