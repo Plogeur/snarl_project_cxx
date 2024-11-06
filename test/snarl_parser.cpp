@@ -52,7 +52,7 @@ void fill_matrix(const std::string& vcf_path) {
     for (const auto& sampleName : sampleNames) {
         std::cout << "sampleName : " << sampleName << std::endl;
     }
-
+ 
     // Read and process variants
     while (vcfParser.hasNext()) {
         vcfParser.nextVariant();
