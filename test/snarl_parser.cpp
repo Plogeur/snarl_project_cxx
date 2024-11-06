@@ -74,7 +74,7 @@ void fill_matrix(const std::string& vcf_path) {
                 continue;
             }
 
-            std::cout << "genotype : " << allele_1 << " " << allele_2 << std::endl;
+            //std::cout << "genotype : " << allele_1 << " " << allele_2 << std::endl;
         }
 
         for (const auto& snarl : list_list_decomposed_snarl) {

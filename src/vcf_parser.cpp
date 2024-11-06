@@ -1,7 +1,7 @@
 #include "vcf_parser.hpp"
 
 // Constructor: Opens the VCF file and parses the header
-VCFParser::VCFParser(const std::string& filename) {
+VCFParser::VCFParser(const std::string& filename) : file(filename) {
     file.open(filename);
     if (!file.is_open()) {
         throw std::runtime_error("Could not open VCF file.");
@@ -48,13 +48,22 @@ const std::vector<std::string>& VCFParser::getSampleNames() const {
 
 // Parses the VCF header to extract sample names
 void VCFParser::parseHeader() {
+
+    file.clear();  // Ensure the file stream is ready
+    file.seekg(0, std::ios::beg);  // Reset to the beginning of the file
+
     std::string line;
     while (std::getline(file, line)) {
-        if (line.substr(0, 1) != "#") {
-            break; // Stop when we hit the data lines
+
+        if (line.empty()) {
+            continue;  // Skip any empty lines
         }
-        if (line.substr(0, 5) == "#CHROM") {
-            // The sample names are in the last part of the header
+
+        if (line[0] != '#') {
+            break;  // Stop when we hit the data lines
+        }
+
+        if (line.substr(0, 6) == "#CHROM") {
             std::istringstream headerStream(line);
             std::string sampleName;
             while (headerStream >> sampleName) {
@@ -70,24 +79,25 @@ void VCFParser::parseHeader() {
     }
 }
 
-// Parses a variant line from the VCF file
+// Parses a variant line from the VCF file and extracts genotype and AT field
 void VCFParser::parseVariant(const std::string& line) {
     std::istringstream variantStream(line);
-    std::string infoField, formatField;
+    std::string columnData;
+    std::string infoField;
     std::string genotypeStr;
 
-    // Skip the first 8 columns
-    for (int i = 0; i < 8; ++i) {
-        variantStream >> genotypeStr; // Just reading the columns, we can ignore them
+    // Skip the first 9 columns (CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT)
+    for (int i = 0; i < 9; ++i) {
+        variantStream >> columnData;
+        if (i == 7) {
+            infoField = columnData; // Capture the INFO column for parsing
+        }
     }
-
-    // Read the FORMAT field
-    variantStream >> formatField;
 
     // Clear previous genotype data
     genotypes.clear();
 
-    // Now read the genotype data for each sample
+    // Read the genotype data for each sample
     for (const auto& sample : sampleNames) {
         if (!(variantStream >> genotypeStr)) {
             throw std::runtime_error("Error reading genotype for sample: " + sample);
@@ -95,10 +105,8 @@ void VCFParser::parseVariant(const std::string& line) {
         genotypes.push_back(extractGenotype(genotypeStr));
     }
 
-    // Extract AT information from the INFO field
-    if (variantStream >> infoField) {
-        atInfo = extractATField(infoField);
-    }
+    // Extract AT field from the INFO column
+    atInfo = extractATField(infoField);
 }
 
 // Extracts the genotype from the genotype string
