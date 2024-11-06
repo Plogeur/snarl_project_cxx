@@ -49,7 +49,6 @@ void fill_matrix(const std::string& vcf_path) {
     VCFParser vcfParser(vcf_path);  // Create an instance of VCFParser
     const std::vector<std::string>& sampleNames = vcfParser.getSampleNames();
 
-    std::cout << "I was past here" << std::endl;
     for (const auto& sampleName : sampleNames) {
         std::cout << "sampleName : " << sampleName << std::endl;
     }
@@ -75,7 +74,7 @@ void fill_matrix(const std::string& vcf_path) {
                 continue;
             }
 
-            std::cout << allele_1 << allele_2 << std::endl;
+            std::cout << "genotype : " << allele_1 << " " << allele_2 << std::endl;
         }
 
         for (const auto& snarl : list_list_decomposed_snarl) {

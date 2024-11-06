@@ -24,7 +24,6 @@ bool VCFParser::hasNext() {
 // Reads the next variant from the VCF file
 void VCFParser::nextVariant() {
     std::string line;
-    std::cout << "line : " << line << std::endl;
     if (std::getline(file, line)) {
         parseVariant(line);
     } else {
@@ -49,15 +48,22 @@ const std::vector<std::string>& VCFParser::getSampleNames() const {
 
 // Parses the VCF header to extract sample names
 void VCFParser::parseHeader() {
+
+    file.clear();  // Ensure the file stream is ready
+    file.seekg(0, std::ios::beg);  // Reset to the beginning of the file
+
     std::string line;
-    std::cout << "huhu" << std::endl;
     while (std::getline(file, line)) {
-        std::cout << "hihi" << std::endl;
-        if (line.substr(0, 1) != "#") {
-            break; // Stop when we hit the data lines
+
+        if (line.empty()) {
+            continue;  // Skip any empty lines
         }
-        if (line.substr(0, 5) == "#CHROM") {
-            // The sample names are in the last part of the header
+
+        if (line[0] != '#') {
+            break;  // Stop when we hit the data lines
+        }
+
+        if (line.substr(0, 6) == "#CHROM") {
             std::istringstream headerStream(line);
             std::string sampleName;
             while (headerStream >> sampleName) {
