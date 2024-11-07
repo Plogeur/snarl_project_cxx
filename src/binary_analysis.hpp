@@ -6,6 +6,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <numeric>
+#include <boost/math/distributions/chi_squared.hpp>
 
 // ------------------------ Chi2 exact test ------------------------
 
@@ -14,9 +15,6 @@ double chiSquareStatistic(const std::vector<std::vector<int>>& observed);
 
 // Function to calculate the degrees of freedom for a 2D table
 int calculateDegreesOfFreedom(int rows, int cols);
-
-// Function to calculate the p-value based on the Chi-square statistic using an approximation
-double chiSquarePValue(double chiSquare, int degreesOfFreedom);
 
 // Function to perform the Chi-square test
 std::string chi2Test(const std::vector<std::vector<int>>& observed);

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <numeric>
 #include <chrono>
+#include <boost/math/distributions/chi_squared.hpp>
 
 // Function to calculate the Chi-square test statistic
 double chiSquareStatistic(const std::vector<std::vector<int>>& observed) {
@@ -45,27 +46,6 @@ int calculateDegreesOfFreedom(int rows, int cols) {
     return (rows - 1) * (cols - 1);
 }
 
-// Function to calculate the p-value based on the Chi-square statistic using an approximation
-double chiSquarePValue(double chiSquare, int degreesOfFreedom) {
-    // We can use an approximation for the Chi-square distribution CDF
-    // This is a simple approximation using the incomplete gamma function
-    // In this case, we use a simple asymptotic approximation.
-
-    double pValue = 1.0;
-    double sumTerm = 1.0;
-    double x = chiSquare / 2.0;
-    double factor = 1.0;
-
-    for (int i = 1; i <= degreesOfFreedom / 2; ++i) {
-        factor *= x / i;
-        sumTerm += factor;
-    }
-
-    pValue = std::exp(-x) * sumTerm;
-
-    return pValue;
-}
-
 // Function to perform the Chi-square test
 std::string chi2Test(const std::vector<std::vector<int>>& observed) {
     // Ensure the table has at least 2 rows and 2 columns and all cells have non-zero counts
@@ -91,8 +71,9 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
                 double chiSquare = chiSquareStatistic(observed);
                 int degreesOfFreedom = calculateDegreesOfFreedom(rows, cols);
 
-                // Calculate the p-value using the approximation
-                double pValue = chiSquarePValue(chiSquare, degreesOfFreedom);
+                // Use Boost to calculate the p-value from the Chi-square distribution
+                boost::math::chi_squared dist(degreesOfFreedom);
+                double pValue = 1 - cdf(dist, chiSquare); // 1 - CDF gives the p-value
 
                 return std::to_string(pValue);  // Return the p-value as a string
             } catch (const std::exception& e) {
@@ -105,6 +86,8 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
         return "N/A";  // Invalid table dimensions
     }
 }
+
+// ------------------- Fisher -------------------
 
 // Function to initialize the log factorials array
 void initLogFacs(double* logFacs, int n) {
@@ -173,19 +156,21 @@ int main() {
         std::cout << "Error: " << e.what() << std::endl;
     }
     clock_t end = clock();
-    std::cout << "Time for fisherExactTest: " << (double)(end - start) / CLOCKS_PER_SEC << " seconds" << std::endl;
+    std::cout << "Time for fisherExactTest: " 
+              << (double)(end - start) / CLOCKS_PER_SEC * 1e6  // Convert seconds to microseconds
+              << " microseconds" << std::endl;
 
     // Measure time for Chi2 test
     auto start2 = std::chrono::high_resolution_clock::now();
     try {
         std::string p_value = chi2Test(table);
-        std::cout << "Chi2 test p-value (optimized): " << p_value << std::endl;
+        std::cout << "Chi2 test p-value : " << p_value << std::endl;
     } catch (const std::exception& e) {
         std::cout << "Error: " << e.what() << std::endl;
     }
     auto end2 = std::chrono::high_resolution_clock::now();
-    auto duration2 = std::chrono::duration_cast<std::chrono::seconds>(end2 - start2);
-    std::cout << "Time for chi2Test: " << duration2.count() << " seconds" << std::endl;
+    auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
+    std::cout << "Time for chi2Test: " << duration2.count() << " microseconds" << std::endl;
 
     return 0;
 }

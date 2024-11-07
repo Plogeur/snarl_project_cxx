@@ -42,27 +42,6 @@ int calculateDegreesOfFreedom(int rows, int cols) {
     return (rows - 1) * (cols - 1);
 }
 
-// Function to calculate the p-value based on the Chi-square statistic using an approximation
-double chiSquarePValue(double chiSquare, int degreesOfFreedom) {
-    // We can use an approximation for the Chi-square distribution CDF
-    // This is a simple approximation using the incomplete gamma function
-    // In this case, we use a simple asymptotic approximation.
-
-    double pValue = 1.0;
-    double sumTerm = 1.0;
-    double x = chiSquare / 2.0;
-    double factor = 1.0;
-
-    for (int i = 1; i <= degreesOfFreedom / 2; ++i) {
-        factor *= x / i;
-        sumTerm += factor;
-    }
-
-    pValue = std::exp(-x) * sumTerm;
-
-    return pValue;
-}
-
 // Function to perform the Chi-square test
 std::string chi2Test(const std::vector<std::vector<int>>& observed) {
     // Ensure the table has at least 2 rows and 2 columns and all cells have non-zero counts
@@ -88,10 +67,11 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
                 double chiSquare = chiSquareStatistic(observed);
                 int degreesOfFreedom = calculateDegreesOfFreedom(rows, cols);
 
-                // Calculate the p-value using the approximation
-                double pValue = chiSquarePValue(chiSquare, degreesOfFreedom);
+                // Use Boost to calculate the p-value from the Chi-square distribution
+                boost::math::chi_squared dist(degreesOfFreedom);
+                double pValue = 1 - cdf(dist, chiSquare); // 1 - CDF gives the p-value
 
-                return std::to_string(pValue);  // Return the p-value as a string
+                return std::to_string(pValue);
             } catch (const std::exception& e) {
                 return "Error: " + std::string(e.what());
             }
