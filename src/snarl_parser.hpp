@@ -5,12 +5,12 @@
 #include <unordered_map>
 #include <utility> // For std::pair
 #include <iostream> // For std::cout, std::cerr
-#include <matrix.hpp>
+#include "matrix.hpp"
 
 // SnarlParser class declaration
 class SnarlParser {
 public:
-    explicit SnarlParser(const std::string& vcf_path);
+    SnarlParser(const std::string& vcf_path);
 
     // Function to split a string by a delimiter
     std::vector<std::string> split(const std::string& str, char delimiter);
@@ -35,6 +35,6 @@ public:
 
 private:
     std::vector<std::string> list_samples;
-    Matrix matrix;
+    Matrix matrix; // Matrix(size_t default_row_number = 1000000, size_t column_number = 2);
     std::string vcf_path;
 };

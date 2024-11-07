@@ -2,6 +2,12 @@
 #include "vcf_parser.hpp"
 #include "matrix.hpp"
 
+SnarlParser::SnarlParser(const std::string& vcf_path) : vcf_path(vcf_path) {
+    VCFParser vcfParser(vcf_path);
+    list_samples = vcfParser.getSampleNames();
+    matrix = Matrix(100000000, list_samples.size()*2);
+}
+
 // Function to determine and extract an integer from the string
 std::pair<int, int> determine_str(const std::string& s, int length_s, int i) {
     int current_int = 0;
@@ -60,24 +66,23 @@ size_t getOrAddIndex(std::unordered_map<std::string, size_t>& orderedMap, const 
 // Add True to the matrix if snarl is found
 void pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn) {
     // Retrieve or add the index in one step and calculate length once
-    size_t lengthOrderedMap = rowHeaderDict.size();
+    int lengthOrderedMap = rowHeaderDict.size();
     size_t idxSnarl = getOrAddIndex(rowHeaderDict, decomposedSnarl, lengthOrderedMap);
 
     // Check if a new matrix chunk is needed
-    size_t currentRowsNumber = matrix.rowCount(); // identificateur "matrix" non définiC/C++(20)
+    size_t currentRowsNumber = matrix.rowCount();
     if (lengthOrderedMap > currentRowsNumber - 1) {
         matrix.expandMatrix();
     }
 
     // Add data to the matrix
-    matrix.addData(idxSnarl, indexColumn);
+    matrix.add_data(idxSnarl, indexColumn);
 }
 
 // Main function that parses the VCF file and fills the matrix
 void fill_matrix(const std::string& vcf_path) {
     VCFParser vcfParser(vcf_path);  // Create an instance of VCFParser
     const std::vector<std::string>& sampleNames = vcfParser.getSampleNames();
- 
     std::unordered_map<std::string, size_t> row_header_dict;
 
     // Read and process variants
@@ -111,10 +116,4 @@ void fill_matrix(const std::string& vcf_path) {
         }
         matrix.set_row_header(row_header_dict);
     }
-}
-
-int main() {
-    std::string vcf_file_path = "big_vcf.vcf";
-    fill_matrix(vcf_file_path);
-    return 0;
 }
