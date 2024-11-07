@@ -1,6 +1,4 @@
 #include "LinearRegression.hpp"
-#include <cmath>   // for sqrt and erf
-#include <iostream>
 
 // Function to calculate p-values based on the t-statistic
 double calculatePValue(double t_stat, int degrees_of_freedom) {
