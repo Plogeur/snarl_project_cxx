@@ -1,4 +1,4 @@
-#include "Matrix.hpp"
+#include "matrix.hpp"
 
 // Constructor implementation
 Matrix::Matrix(size_t default_row_number, size_t column_number)

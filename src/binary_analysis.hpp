@@ -1,17 +1,35 @@
-#pragma once
-
 #ifndef BINARY_ANALYSIS_HPP
 #define BINARY_ANALYSIS_HPP
 
-#include <Eigen/Dense>
 #include <vector>
+#include <string>
+#include <cmath>
+#include <stdexcept>
+#include <numeric>
 
-// Function to perform the Chi-Squared Test
-// Returns the Chi-Squared statistic and sets the p-value reference
-double chiSquaredTest(const Eigen::MatrixXd& observed, double& p_value);
+// ------------------------ Chi2 exact test ------------------------
 
-// Function to perform Fisher's Exact Test
-// Returns the p-value for the Fisher's Exact Test
-double fisherExactTest(const Eigen::MatrixXd& contingencyTable);
+// Function to calculate the Chi-square test statistic
+double chiSquareStatistic(const std::vector<std::vector<int>>& observed);
 
-#endif
+// Function to calculate the degrees of freedom for a 2D table
+int calculateDegreesOfFreedom(int rows, int cols);
+
+// Function to calculate the p-value based on the Chi-square statistic using an approximation
+double chiSquarePValue(double chiSquare, int degreesOfFreedom);
+
+// Function to perform the Chi-square test
+std::string chi2Test(const std::vector<std::vector<int>>& observed);
+
+// ------------------------ Fisher exact test ------------------------
+
+// Function to initialize the log factorials array
+void initLogFacs(double* logFacs, int n);
+
+// Function to calculate the log probability of the hypergeometric distribution
+double logHypergeometricProb(double* logFacs, int a, int b, int c, int d);
+
+// Function to perform Fisher's exact test
+double fastFishersExactTest(const std::vector<std::vector<int>>& table);
+
+#endif // CHI2FISHERTEST_HPP

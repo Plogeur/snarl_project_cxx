@@ -1,6 +1,9 @@
-#include "binary_analysis.hpp"
-
-// ------------------------ Chi2 exact test ------------------------
+#include <iostream>
+#include <vector>
+#include <stdexcept>
+#include <cmath>
+#include <numeric>
+#include <chrono>
 
 // Function to calculate the Chi-square test statistic
 double chiSquareStatistic(const std::vector<std::vector<int>>& observed) {
@@ -103,8 +106,6 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
     }
 }
 
-// ------------------------ Fisher exact test ------------------------
-
 // Function to initialize the log factorials array
 void initLogFacs(double* logFacs, int n) {
     logFacs[0] = 0.0;  // log(1) = 0, factorial of 0 is 1
@@ -158,4 +159,33 @@ double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
     // Clean up memory
     delete[] logFacs;
     return exp(logpCutoff + log(pFraction));
+}
+
+int main() {
+    std::vector<std::vector<int>> table = {{1982, 3018}, {2056, 2944}};
+
+    // Measure time for Fisher's exact test
+    clock_t start = clock();
+    try {
+        double p_value = fastFishersExactTest(table);
+        std::cout << "Fisher's exact test p-value: " << p_value << std::endl;
+    } catch (const std::exception& e) {
+        std::cout << "Error: " << e.what() << std::endl;
+    }
+    clock_t end = clock();
+    std::cout << "Time for fisherExactTest: " << (double)(end - start) / CLOCKS_PER_SEC << " seconds" << std::endl;
+
+    // Measure time for Chi2 test
+    auto start2 = std::chrono::high_resolution_clock::now();
+    try {
+        std::string p_value = chi2Test(table);
+        std::cout << "Chi2 test p-value (optimized): " << p_value << std::endl;
+    } catch (const std::exception& e) {
+        std::cout << "Error: " << e.what() << std::endl;
+    }
+    auto end2 = std::chrono::high_resolution_clock::now();
+    auto duration2 = std::chrono::duration_cast<std::chrono::seconds>(end2 - start2);
+    std::cout << "Time for chi2Test: " << duration2.count() << " seconds" << std::endl;
+
+    return 0;
 }
