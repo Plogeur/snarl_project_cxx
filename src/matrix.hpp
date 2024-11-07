@@ -27,6 +27,8 @@ public:
     // Getter for row header
     const std::vector<std::string>& get_row_header() const;
 
+    size_t rowCount() const;
+
     // Getter for default row number
     size_t get_default_row_number() const;
 

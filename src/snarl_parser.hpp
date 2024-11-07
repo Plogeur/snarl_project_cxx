@@ -5,18 +5,36 @@
 #include <unordered_map>
 #include <utility> // For std::pair
 #include <iostream> // For std::cout, std::cerr
+#include <matrix.hpp>
 
-// Function to split a string by a delimiter
-std::vector<std::string> split(const std::string& str, char delimiter);
+// SnarlParser class declaration
+class SnarlParser {
+public:
+    explicit SnarlParser(const std::string& vcf_path);
 
-// Function to determine and extract an integer from the string
-std::pair<int, int> determine_str(const std::string& s, int length_s, int i);
+    // Function to split a string by a delimiter
+    std::vector<std::string> split(const std::string& str, char delimiter);
 
-// Function to decompose a string with snarl information
-std::vector<std::string> decompose_string(const std::string& s);
+    // Function to determine and extract an integer from the string
+    std::pair<int, int> determine_str(const std::string& s, int length_s, int i);
 
-// Function to decompose a list of snarl strings
-std::vector<std::vector<std::string> > decompose_snarl(const std::vector<std::string>& lst);
+    // Function to decompose a string with snarl information
+    std::vector<std::string> decompose_string(const std::string& s);
 
-// Main function that parses the VCF file and fills the matrix
-void fill_matrix(const std::string& vcf_path);
+    // Function to decompose a list of snarl strings
+    std::vector<std::vector<std::string> > decompose_snarl(const std::vector<std::string>& lst);
+    
+    // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
+    size_t getOrAddIndex(std::unordered_map<std::string, int>& orderedMap, const std::string& key, int lengthOrderedMap);
+
+    // Add True to the matrix if snarl is found
+    void pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, int>& rowHeaderDict, size_t indexColumn);
+
+    // Main function that parses the VCF file and fills the matrix
+    void fill_matrix(const std::string& vcf_path);
+
+private:
+    std::vector<std::string> list_samples;
+    Matrix matrix;
+    std::string vcf_path;
+};

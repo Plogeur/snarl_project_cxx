@@ -6,8 +6,8 @@
       "type": "lldb",
       "request": "launch",
       "args": [],
-      "cwd": "/Users/aliasmatis/Desktop/projects/snarl_project_cxx/test",
-      "program": "/Users/aliasmatis/Desktop/projects/snarl_project_cxx/test/build/Debug/outDebug"
+      "cwd": "/Users/aliasmatis/Desktop/projects/snarl_project_cxx/src",
+      "program": "/Users/aliasmatis/Desktop/projects/snarl_project_cxx/src/build/Debug/outDebug"
     }
   ]
 }

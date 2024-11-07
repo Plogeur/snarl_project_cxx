@@ -27,6 +27,11 @@ size_t Matrix::get_default_row_number() const {
     return default_row_number;
 }
 
+// Getter for row number
+size_t Matrix::rowCount() const {
+    return matrix.size();
+}
+
 // Setter for row header
 void Matrix::set_row_header(const std::vector<std::string>& row_header) {
     this->row_header = row_header;
