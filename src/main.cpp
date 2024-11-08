@@ -2,45 +2,63 @@
 #include <string>
 #include <unordered_map>
 #include <chrono>
-#include "cxxopts.hpp"          
 #include "snarl_parser.hpp"     
 #include "vcf_parser.hpp"
 #include "matrix.hpp"
 #include "arg_parser.hpp"
 
+void print_help() {
+    std::cout << "Usage: SnarlParser [options]\n\n"
+              << "Options:\n"
+              << "  --vcf_path <path>           Path to the VCF file (.vcf or .vcf.gz)\n"
+              << "  --snarl <path>              Path to the snarl file (.txt or .tsv)\n"
+              << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
+              << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
+              << "  -o, --output <path>         Path to the output file\n"
+              << "  -h, --help                  Print this help message\n";
+}
+
 int main(int argc, char* argv[]) {
+    // Declare variables to hold argument values
+    std::string vcf_path, snarl_path, binary_path, quantitative_path, output_path;
+    bool show_help = false;
+
+    // Parse arguments manually
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--vcf_path" && i + 1 < argc) {
+            vcf_path = argv[++i];
+        } else if (arg == "--snarl" && i + 1 < argc) {
+            snarl_path = argv[++i];
+        } else if ((arg == "-b" || arg == "--binary") && i + 1 < argc) {
+            binary_path = argv[++i];
+        } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
+            quantitative_path = argv[++i];
+        } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
+            output_path = argv[++i];
+        } else if (arg == "-h" || arg == "--help") {
+            show_help = true;
+        }
+    }
+
+    // Display help if requested or if required arguments are missing
+    if (show_help || vcf_path.empty() || snarl_path.empty()) {
+        print_help();
+        return 0;
+    }
+
     try {
-        // Parse command-line arguments
-        cxxopts::Options options("SnarlParser", "Parse and analyze snarl from VCF file");
-        options.add_options()
-            ("vcf_path", "Path to the VCF file (.vcf or .vcf.gz)", cxxopts::value<std::string>())
-            ("snarl", "Path to the snarl file containing snarls and aT (.txt or .tsv)", cxxopts::value<std::string>())
-            ("b,binary", "Path to the binary group file (.txt or .tsv)", cxxopts::value<std::string>())
-            ("q,quantitative", "Path to the quantitative phenotype file (.txt or .tsv)", cxxopts::value<std::string>())
-            ("o,output", "Path to the output file", cxxopts::value<std::string>()->default_value(""))
-            ("help", "Print help");
+        // Check format of the VCF file
+        check_format_vcf_file(vcf_path);
+        std::cout << "VCF file format is correct." << std::endl;
 
-        auto result = options.parse(argc, argv);
-
-        // Display help if requested
-        if (result.count("help") || argc == 1) {
-            std::cout << options.help() << std::endl;
-            return 0;
-        }
-
-        // Extract mandatory arguments
-        std::string vcf_path = result["vcf_path"].as<std::string>();
-        std::string snarl_path = result["snarl"].as<std::string>();
-
-        // Validate file formats
-        if (!check_format_vcf_file(vcf_path) || !check_format_group_snarl(snarl_path)) {
-            std::cerr << "Error: Invalid file format for VCF or Snarl file." << std::endl;
-            return 1;
-        }
+        // Check format of the group/snarl file
+        check_format_group_snarl(snarl_path);
+        std::cout << "Group/Snarl file format is correct." << std::endl;
 
         // Initialize the SnarlProcessor with the VCF path
         auto start = std::chrono::high_resolution_clock::now();
-        SnarlProcessor vcf_object(vcf_path);
+        SnarlParser vcf_object(vcf_path);
         vcf_object.fill_matrix();
         auto end = std::chrono::high_resolution_clock::now();
         std::cout << "Time Matrix: " << std::chrono::duration<double>(end - start).count() << " s" << std::endl;
@@ -50,12 +68,10 @@ int main(int argc, char* argv[]) {
         auto snarl = parse_snarl_path_file(snarl_path);
 
         // Process binary group file if provided
-        if (result.count("binary")) {
-            std::string binary_path = result["binary"].as<std::string>();
+        if (!binary_path.empty()) {
             auto binary_group = parse_group_file(binary_path);
 
-            if (result.count("output")) {
-                std::string output_path = result["output"].as<std::string>();
+            if (!output_path.empty()) {
                 vcf_object.binary_table(snarl, binary_group, output_path);
             } else {
                 vcf_object.binary_table(snarl, binary_group);
@@ -63,12 +79,10 @@ int main(int argc, char* argv[]) {
         }
 
         // Process quantitative phenotype file if provided
-        if (result.count("quantitative")) {
-            std::string quantitative_path = result["quantitative"].as<std::string>();
+        if (!quantitative_path.empty()) {
             auto quantitative = parse_pheno_file(quantitative_path);
 
-            if (result.count("output")) {
-                std::string output_path = result["output"].as<std::string>();
+            if (!output_path.empty()) {
                 vcf_object.quantitative_table(snarl, quantitative, output_path);
             } else {
                 vcf_object.quantitative_table(snarl, quantitative);
@@ -78,9 +92,6 @@ int main(int argc, char* argv[]) {
         end = std::chrono::high_resolution_clock::now();
         std::cout << "Time P-value: " << std::chrono::duration<double>(end - start).count() << " s" << std::endl;
 
-    } catch (const cxxopts::OptionException& e) {
-        std::cerr << "Error parsing options: " << e.what() << std::endl;
-        return 1;
     } catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << std::endl;
         return 1;

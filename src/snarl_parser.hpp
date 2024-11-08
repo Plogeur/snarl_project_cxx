@@ -34,14 +34,14 @@ public:
     void pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, int>& rowHeaderDict, size_t indexColumn);
 
     // Main function that parses the VCF file and fills the matrix
-    void fill_matrix(const std::string& vcf_path);
+    void fill_matrix();
 
-    void binary_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
-                        const std::unordered_map<int, std::unordered_set<std::string>>& binary_groups,
+    void binary_table(const std::unordered_map<std::string, std::vector<std::string> >& snarls,
+                        const std::unordered_map<std::string, bool>& binary_groups,
                         const std::string& output = "output/binary_output.tsv");
 
-    void quantitative_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
-                                const std::unordered_map<std::string, double>& quantitative,
+    void quantitative_table(const std::unordered_map<std::string, std::vector<std::string> >& snarls,
+                                const std::unordered_map<std::string, float>& quantitative,
                                 const std::string& output = "output/quantitative_output.tsv");
 
 private:

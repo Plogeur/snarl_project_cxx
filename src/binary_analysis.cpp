@@ -142,11 +142,11 @@ double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
 }
 
 std::vector<std::vector<int>> create_binary_table(
-    const std::vector<std::unordered_set<std::string>>& groups, 
+    const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl) 
 {
-    std::map<std::string, int> row_headers_dict = matrix.get_row_header();
-    std::vector<std::string> list_samples = this->list_samples;
+    std::map<std::string, int> row_headers_dict = matrix.get_row_header();  // Assuming matrix is accessible
+    std::vector<std::string> list_samples = this->list_samples;             // Assuming list_samples is accessible
     size_t length_column_headers = list_path_snarl.size();
 
     // Initialize g0 and g1 with zeros, corresponding to the length of column_headers
@@ -166,11 +166,18 @@ std::vector<std::vector<int>> create_binary_table(
         for (int idx : idx_srr_save) {
             std::string srr = list_samples[idx / 2];  // Convert index to the appropriate sample name
 
-            if (groups[0].count(srr)) {
-                g0[idx_g] += 1;
-            }
-            if (groups[1].count(srr)) {
-                g1[idx_g] += 1;
+            // Check if sample belongs to a group and increment the respective count
+            auto it = groups.find(srr);
+            if (it != groups.end()) {
+                if (it->second) {
+                    // If true, consider as part of Group 1
+                    g1[idx_g] += 1;
+                } else {
+                    // If false, consider as part of Group 0
+                    g0[idx_g] += 1;
+                }
+            } else {
+                throw std::runtime_error("Sample " + srr + " not found in groups.");
             }
         }
     }

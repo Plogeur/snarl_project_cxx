@@ -82,7 +82,7 @@ void pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::stri
 }
 
 // Main function that parses the VCF file and fills the matrix
-void fill_matrix(const std::string& vcf_path) {
+void fill_matrix() {
     VCFParser vcfParser(vcf_path);  // Create an instance of VCFParser
     const std::vector<std::string>& sampleNames = vcfParser.getSampleNames();
     std::unordered_map<std::string, size_t> row_header_dict;
@@ -122,7 +122,7 @@ void fill_matrix(const std::string& vcf_path) {
 
 // Binary Table Generation
 void binary_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
-                                  const std::unordered_map<int, std::unordered_set<std::string>>& binary_groups,
+                                  const std::unordered_map<std::string, bool>& binary_groups,
                                   const std::string& output) 
 {
     std::ofstream outf(output, std::ios::binary);
@@ -153,7 +153,7 @@ void binary_table(const std::unordered_map<std::string, std::vector<std::string>
 
 // Quantitative Table Generation
 void quantitative_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
-                                        const std::unordered_map<std::string, double>& quantitative,
+                                        const std::unordered_map<std::string, float>& quantitative,
                                         const std::string& output) 
 {
     std::ofstream outf(output, std::ios::binary);

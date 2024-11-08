@@ -21,7 +21,7 @@ std::unordered_map<std::string, bool> parse_group_file(const std::string& group_
 std::unordered_map<std::string, float> parse_pheno_file(const std::string& file_path);
 
 // Parses the snarl path file and returns a map with snarl as keys and paths as a list of strings.
-std::unordered_map<std::string, std::vector<std::string>> parse_snarl_path_file(const std::string& path_file);
+std::unordered_map<std::string, std::vector<std::string> > parse_snarl_path_file(const std::string& path_file);
 
 std::string check_format_vcf_file(const std::string& file_path);
 std::string check_format_group_snarl(const std::string& file_path);

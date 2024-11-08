@@ -15,6 +15,6 @@ void linearRegression(const Eigen::MatrixXd& X, const Eigen::VectorXd& y, Eigen:
 // Function to calculate p-values based on the t-statistic
 double calculatePValue(double t_stat, int degrees_of_freedom);
 
-std::vector<std::vector<int>> create_binary_table(const std::vector<std::unordered_set<std::string>>& groups, const std::vector<std::string>& list_path_snarl);
+std::vector<std::vector<int>> create_binary_table(const std::unordered_map<std::string, bool>& groups, const std::vector<std::string>& list_path_snarl);
 
 #endif // LINEAR_REGRESSION_HPP
