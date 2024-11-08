@@ -1,5 +1,7 @@
 #include <arg_parser.hpp>
 
+namespace fs = std::filesystem;
+
 // Function to parse the binary phenotype file
 std::unordered_map<std::string, bool> parse_group_file(const std::string& group_file) {
     std::unordered_map<std::string, bool> group;
@@ -30,6 +32,7 @@ std::unordered_map<std::string, bool> parse_group_file(const std::string& group_
     file.close();
     return group;
 }
+
 // Function to parse the phenotype file
 std::unordered_map<std::string, float> parse_pheno_file(const std::string& file_path) {
     std::unordered_map<std::string, float> parsed_pheno;
@@ -92,4 +95,102 @@ std::unordered_map<std::string, std::vector<std::string>> parse_snarl_path_file(
     file.close();
 
     return snarl_paths;
+}
+
+std::string check_format_vcf_file(const std::string& file_path) {
+    // Check if the file exists
+    if (!fs::is_regular_file(file_path)) {
+        throw std::invalid_argument("The file " + file_path + " does not exist.");
+    }
+
+    // Check if the file ends with .vcf or .vcf.gz
+    if (file_path.size() < 4 || 
+        (file_path.substr(file_path.size() - 4) != ".vcf" && file_path.substr(file_path.size() - 7) != ".vcf.gz")) {
+        throw std::invalid_argument("The file " + file_path + " is not a valid VCF file. It must have a .vcf extension or .vcf.gz.");
+    }
+
+    return file_path;
+}
+
+std::string check_format_group_snarl(const std::string& file_path) {
+    // Check if the file exists
+    if (!fs::is_regular_file(file_path)) {
+        throw std::invalid_argument("The file " + file_path + " does not exist.");
+    }
+
+    // Check if the file ends with .txt or .tsv
+    if (file_path.size() < 4 || 
+        (file_path.substr(file_path.size() - 4) != ".txt" && file_path.substr(file_path.size() - 4) != ".tsv")) {
+        throw std::invalid_argument("The file " + file_path + " is not a valid group/snarl file. It must have a .txt extension or .tsv.");
+    }
+
+    return file_path;
+}
+
+std::string check_format_pheno_q(const std::string& file_path) {
+    // Check if the file exists
+    if (!fs::is_regular_file(file_path)) {
+        throw std::invalid_argument("The file " + file_path + " does not exist.");
+    }
+
+    // Open the file and check the header
+    std::ifstream file(file_path);
+    if (!file.is_open()) {
+        throw std::invalid_argument("Unable to open the file " + file_path);
+    }
+
+    std::string first_line;
+    std::getline(file, first_line);
+    file.close();
+
+    std::vector<std::string> header;
+    size_t start = 0;
+    size_t end = first_line.find('\t');
+    while (end != std::string::npos) {
+        header.push_back(first_line.substr(start, end - start));
+        start = end + 1;
+        end = first_line.find('\t', start);
+    }
+    header.push_back(first_line.substr(start));
+
+    std::vector<std::string> expected_header = {"FID", "IID", "PHENO"};
+    if (header != expected_header) {
+        throw std::invalid_argument("The file must contain the following headers: FID, IID, PHENO and be split by tabulation.");
+    }
+
+    return file_path;
+}
+
+std::string check_format_pheno_b(const std::string& file_path) {
+    // Check if the file exists
+    if (!fs::is_regular_file(file_path)) {
+        throw std::invalid_argument("The file " + file_path + " does not exist.");
+    }
+
+    // Open the file and check the header
+    std::ifstream file(file_path);
+    if (!file.is_open()) {
+        throw std::invalid_argument("Unable to open the file " + file_path);
+    }
+
+    std::string first_line;
+    std::getline(file, first_line);
+    file.close();
+
+    std::vector<std::string> header;
+    size_t start = 0;
+    size_t end = first_line.find('\t');
+    while (end != std::string::npos) {
+        header.push_back(first_line.substr(start, end - start));
+        start = end + 1;
+        end = first_line.find('\t', start);
+    }
+    header.push_back(first_line.substr(start));
+
+    std::vector<std::string> expected_header = {"SAMPLE", "GROUP"};
+    if (header != expected_header) {
+        throw std::invalid_argument("The file must contain the following headers: SAMPLE, GROUP and be split by tabulation.");
+    }
+
+    return file_path;
 }

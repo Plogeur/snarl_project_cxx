@@ -1,4 +1,5 @@
 #include "binary_analysis.hpp"
+#include "snarl_parser.hpp"
 
 // ------------------------ Chi2 exact test ------------------------
 
@@ -138,4 +139,42 @@ double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
     // Clean up memory
     delete[] logFacs;
     return exp(logpCutoff + log(pFraction));
+}
+
+std::vector<std::vector<int>> create_binary_table(
+    const std::vector<std::unordered_set<std::string>>& groups, 
+    const std::vector<std::string>& list_path_snarl) 
+{
+    std::map<std::string, int> row_headers_dict = matrix.get_row_header();
+    std::vector<std::string> list_samples = this->list_samples;
+    size_t length_column_headers = list_path_snarl.size();
+
+    // Initialize g0 and g1 with zeros, corresponding to the length of column_headers
+    std::vector<int> g0(length_column_headers, 0);
+    std::vector<int> g1(length_column_headers, 0);
+
+    // Iterate over each path_snarl in column_headers
+    for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
+        const std::string& path_snarl = list_path_snarl[idx_g];
+        std::vector<int> idx_srr_save(list_samples.size());
+        std::iota(idx_srr_save.begin(), idx_srr_save.end(), 0);  // Fill with [0, 1, ..., len(list_samples) - 1]
+
+        std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
+        idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, idx_srr_save);
+
+        // Count occurrences in g0 and g1 based on the updated idx_srr_save
+        for (int idx : idx_srr_save) {
+            std::string srr = list_samples[idx / 2];  // Convert index to the appropriate sample name
+
+            if (groups[0].count(srr)) {
+                g0[idx_g] += 1;
+            }
+            if (groups[1].count(srr)) {
+                g1[idx_g] += 1;
+            }
+        }
+    }
+
+    // Return the populated binary table
+    return {g0, g1};
 }

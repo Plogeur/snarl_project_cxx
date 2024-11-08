@@ -3,6 +3,9 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <fstream>
+#include <unordered_set>
+#include <sstream>
 #include <utility> // For std::pair
 #include <iostream> // For std::cout, std::cerr
 #include "matrix.hpp"
@@ -32,6 +35,14 @@ public:
 
     // Main function that parses the VCF file and fills the matrix
     void fill_matrix(const std::string& vcf_path);
+
+    void binary_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
+                        const std::unordered_map<int, std::unordered_set<std::string>>& binary_groups,
+                        const std::string& output = "output/binary_output.tsv");
+
+    void quantitative_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
+                                const std::unordered_map<std::string, double>& quantitative,
+                                const std::string& output = "output/quantitative_output.tsv");
 
 private:
     std::vector<std::string> list_samples;

@@ -8,15 +8,6 @@
 #include "matrix.hpp"
 #include "arg_parser.hpp"
 
-// Function prototypes for file checking and parsing (implement these separately)
-bool check_format_vcf_file(const std::string& path);
-bool check_format_group_snarl(const std::string& path);
-bool check_format_pheno_b(const std::string& path);
-bool check_format_pheno_q(const std::string& path);
-std::unordered_map<std::string, size_t> parse_snarl_path_file(const std::string& path);
-std::vector<std::string> parse_group_file(const std::string& path);
-std::vector<double> parse_pheno_file(const std::string& path);
-
 int main(int argc, char* argv[]) {
     try {
         // Parse command-line arguments

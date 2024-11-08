@@ -1,6 +1,8 @@
 #include "snarl_parser.hpp"
 #include "vcf_parser.hpp"
 #include "matrix.hpp"
+#include "binary_analysis.hpp"
+#include "quantitative_analysis.hpp"
 
 SnarlParser::SnarlParser(const std::string& vcf_path) : vcf_path(vcf_path) {
     VCFParser vcfParser(vcf_path);
@@ -115,5 +117,64 @@ void fill_matrix(const std::string& vcf_path) {
             }
         }
         matrix.set_row_header(row_header_dict);
+    }
+}
+
+// Binary Table Generation
+void binary_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
+                                  const std::unordered_map<int, std::unordered_set<std::string>>& binary_groups,
+                                  const std::string& output) 
+{
+    std::ofstream outf(output, std::ios::binary);
+    if (!outf.is_open()) {
+        std::cerr << "Error opening output file!" << std::endl;
+        return;
+    }
+
+    // Write headers
+    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_Fisher\tP_Chi2\tGROUP_1_PATH_1\tGROUP_1_PATH_2\tGROUP_2_PATH_1\tGROUP_2_PATH_2\n";
+    outf.write(headers.c_str(), headers.size());
+
+    // Iterate over each snarl
+    for (const auto& [snarl, list_snarl] : snarls) {
+        auto df = create_binary_table(binary_groups, list_snarl);
+        auto stats = binary_stat_test(df);
+
+        std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
+        // Assuming stats is a vector containing the values in the order: fisher_p_value, chi2_p_value, GIPI, GIPII, GIIPI, GIIPII
+        std::stringstream data;
+        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var << "\t" << ref << "\t" << alt
+             << "\t" << stats[0] << "\t" << stats[1] << "\t" << stats[2] << "\t" << stats[3]
+             << "\t" << stats[4] << "\t" << stats[5] << "\n";
+        
+        outf.write(data.str().c_str(), data.str().size());
+    }
+}
+
+// Quantitative Table Generation
+void quantitative_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
+                                        const std::unordered_map<std::string, double>& quantitative,
+                                        const std::string& output) 
+{
+    std::ofstream outf(output, std::ios::binary);
+    if (!outf.is_open()) {
+        std::cerr << "Error opening output file!" << std::endl;
+        return;
+    }
+
+    // Write headers
+    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP\n";
+    outf.write(headers.c_str(), headers.size());
+
+    // Iterate over each snarl
+    for (const auto& [snarl, list_snarl] : snarls) {
+        auto df = create_quantitative_table(list_snarl);
+        double pvalue = linear_regression(df, quantitative);
+
+        std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
+        std::stringstream data;
+        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var << "\t" << ref << "\t" << alt << "\t" << pvalue << "\n";
+
+        outf.write(data.str().c_str(), data.str().size());
     }
 }
