@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 class Matrix {
 private:
@@ -35,7 +36,7 @@ public:
     void expandMatrix();
 
     // Setter for row header
-    void set_row_header(const std::vector<std::string>& row_header);
+    void set_row_header(const std::unordered_map<std::string, int>& row_header);
 
     // Add data at specified indices
     void add_data(size_t idx_snarl, size_t idx_geno);

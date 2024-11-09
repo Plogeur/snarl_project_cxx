@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <unordered_map>
 #include <map>
+#include "matrix.hpp"
+#include "snarl_parser.hpp"
 
 // ------------------------ Chi2 exact test ------------------------
 
@@ -45,6 +47,6 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
 std::vector<std::vector<int>> create_binary_table(
     const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl, 
-    std::vector<std::string> list_samples);
-    
+    const std::vector<std::string>& list_samples, Matrix& matrix);
+
 #endif // CHI2FISHERTEST_HPP

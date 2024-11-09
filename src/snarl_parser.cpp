@@ -66,7 +66,7 @@ size_t getOrAddIndex(std::unordered_map<std::string, size_t>& orderedMap, const 
 }
 
 // Add True to the matrix if snarl is found
-void pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn) {
+void SnarlParser::pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, int>& rowHeaderDict, size_t indexColumn) {
     // Retrieve or add the index in one step and calculate length once
     int lengthOrderedMap = rowHeaderDict.size();
     size_t idxSnarl = getOrAddIndex(rowHeaderDict, decomposedSnarl, lengthOrderedMap);
@@ -82,10 +82,9 @@ void pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::stri
 }
 
 // Main function that parses the VCF file and fills the matrix
-void fill_matrix() {
-    VCFParser vcfParser(vcf_path);  // Create an instance of VCFParser
-    const std::vector<std::string>& sampleNames = vcfParser.getSampleNames();
-    std::unordered_map<std::string, size_t> row_header_dict;
+void SnarlParser::fill_matrix() {
+    VCFParser vcfParser(vcf_path);
+    std::unordered_map<std::string, int> row_header_dict;
 
     // Read and process variants
     while (vcfParser.hasNext()) {
@@ -123,8 +122,8 @@ void fill_matrix() {
 std::vector<int> identify_correct_path(
     const std::vector<std::string>& decomposed_snarl, 
     const std::unordered_map<std::string, int>& row_headers_dict, 
-    std::vector<int>& srr_save
-) {
+    std::vector<int>& srr_save, const Matrix& matrix) {
+
     std::vector<int> rows_to_check;
 
     // Loop through decomposed snarl
@@ -141,28 +140,40 @@ std::vector<int> identify_correct_path(
         }
     }
 
-    // Extract the rows to check (Assuming matrix extraction logic is handled elsewhere)
-    // For illustration, assume matrix is available as `matrix`
-    std::vector<std::vector<int>> extracted_rows;
+    // Extract the rows to check
+    std::vector<std::vector<bool>> extracted_rows;
     for (int row : rows_to_check) {
-        extracted_rows.push_back(matrix[row]);  // Assume matrix[row] is accessible
+        extracted_rows.push_back(matrix.get_matrix()[row]);
     }
-
-    // Find columns where all values are 1
+    
+    // Find columns where all values are 1 (or true if row is std::vector<bool>)
     std::vector<int> idx_srr_save;
     if (!extracted_rows.empty()) {
         int num_cols = extracted_rows[0].size();
+        
+        // Ensure all rows have the same number of columns
+        for (const auto& row : extracted_rows) {
+            if (row.size() != num_cols) {
+                // Handle case where row sizes are inconsistent (optional)
+                // You might want to throw an error or handle it in a different way
+                throw std::runtime_error("Inconsistent row size in extracted_rows");
+            }
+        }
+
+        // Check each column
         for (int col = 0; col < num_cols; ++col) {
             bool all_ones = true;
+            
             for (const auto& row : extracted_rows) {
-                if (row[col] != 1) {
+                // Compare to true (if rows are std::vector<bool>)
+                if (row[col] != true) {  // Use 'true' for boolean comparison
                     all_ones = false;
                     break;
                 }
             }
 
             if (all_ones) {
-                idx_srr_save.push_back(col);  // Store column index where all values are 1
+                idx_srr_save.push_back(col);  // Store column index where all values are true (or 1)
             }
         }
     }
@@ -173,7 +184,7 @@ std::vector<int> identify_correct_path(
 }
 
 // Binary Table Generation
-void binary_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
+void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
                                   const std::unordered_map<std::string, bool>& binary_groups,
                                   const std::string& output) 
 {
@@ -189,7 +200,7 @@ void binary_table(const std::unordered_map<std::string, std::vector<std::string>
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
-        std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, list_samples);
+        std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, list_samples, matrix);
         auto stats = binary_stat_test(df);
 
         std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
@@ -204,7 +215,7 @@ void binary_table(const std::unordered_map<std::string, std::vector<std::string>
 }
 
 // Quantitative Table Generation
-void quantitative_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
+void SnarlParser::quantitative_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
                                         const std::unordered_map<std::string, float>& quantitative_phenotype,
                                         const std::string& output) 
 {
@@ -220,7 +231,7 @@ void quantitative_table(const std::unordered_map<std::string, std::vector<std::s
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
-        std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(list_snarl, list_samples);
+        std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(list_snarl, list_samples, matrix);
         
         // std::make_tuple(se, beta, p_value)
         std::tuple<double, double, double> tuple_info = linear_regression(df, quantitative_phenotype);

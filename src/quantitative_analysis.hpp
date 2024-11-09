@@ -11,6 +11,8 @@
 #include <stdexcept>
 #include <algorithm>
 #include <tuple>
+#include "matrix.hpp"
+#include "snarl_parser.hpp"
 
 // Function to calculate the mean of a vector
 double mean(const std::vector<double>& v);
@@ -26,6 +28,8 @@ std::tuple<double, double, double> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, float>& quantitative_phenotype);
 
-std::unordered_map<std::string, std::vector<int>> create_quantitative_table(const std::vector<std::string>& column_headers, std::vector<std::string> list_samples);
+std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
+    const std::vector<std::string>& column_headers, 
+    const std::vector<std::string>& list_samples, Matrix& matrix);
 
 #endif

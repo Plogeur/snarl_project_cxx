@@ -27,7 +27,7 @@ size_t Matrix::rowCount() const {
 }
 
 // Setter for row header
-void Matrix::set_row_header(const std::vector<std::string>& row_header) {
+void Matrix::set_row_header(const std::unordered_map<std::string, int>& row_header) {
     this->row_header = row_header;
 }
 

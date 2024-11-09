@@ -186,7 +186,7 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
 std::vector<std::vector<int>> create_binary_table(
     const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl, 
-    std::vector<std::string> list_samples) 
+    const std::vector<std::string>& list_samples, Matrix& matrix) 
 {
     std::unordered_map<std::string, int> row_headers_dict = matrix.get_row_header();
     size_t length_column_headers = list_path_snarl.size();
@@ -202,7 +202,7 @@ std::vector<std::vector<int>> create_binary_table(
         std::iota(idx_srr_save.begin(), idx_srr_save.end(), 0);  // Fill with [0, 1, ..., len(list_samples) - 1]
 
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
-        idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, idx_srr_save);
+        idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, idx_srr_save, matrix);
 
         // Count occurrences in g0 and g1 based on the updated idx_srr_save
         for (int idx : idx_srr_save) {
