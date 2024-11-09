@@ -12,7 +12,7 @@ const std::vector<std::vector<bool>>& Matrix::get_matrix() const {
 }
 
 // Getter for row header
-const std::unordered_map<std::string, int>& Matrix::get_row_header() const {
+const std::unordered_map<std::string, size_t>& Matrix::get_row_header() const {
     return row_header;
 }
 
@@ -27,7 +27,7 @@ size_t Matrix::rowCount() const {
 }
 
 // Setter for row header
-void Matrix::set_row_header(const std::unordered_map<std::string, int>& row_header) {
+void Matrix::set_row_header(const std::unordered_map<std::string, size_t>& row_header) {
     this->row_header = row_header;
 }
 

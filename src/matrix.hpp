@@ -13,7 +13,7 @@ private:
     size_t default_row_number;                   // Default number of rows
     size_t column_number;                        // Number of columns
     std::vector<std::vector<bool> > matrix_2D;      // 2D vector to represent the matrix
-    std::unordered_map<std::string, int> row_header;
+    std::unordered_map<std::string, size_t> row_header;
 
 public:
     // Constructor
@@ -26,20 +26,22 @@ public:
     void set_matrix(const std::vector<std::vector<bool> >& expanded_matrix);
 
     // Getter for row header
-    const std::unordered_map<std::string, int>& get_row_header() const;
+    const std::unordered_map<std::string, size_t>& get_row_header() const;
 
+    // Getter for row count matrix
     size_t rowCount() const;
 
     // Getter for default row number
     size_t get_default_row_number() const;
 
+    // expand matrix when is full (increase size by + default_row_number)
     void expandMatrix();
 
     // Setter for row header
-    void set_row_header(const std::unordered_map<std::string, int>& row_header);
+    void set_row_header(const std::unordered_map<std::string, size_t>& row_header);
 
     // Add data at specified indices
     void add_data(size_t idx_snarl, size_t idx_geno);
 };
 
-#endif // MATRIX_HPP
+#endif

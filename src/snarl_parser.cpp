@@ -11,20 +11,20 @@ SnarlParser::SnarlParser(const std::string& vcf_path) : vcf_path(vcf_path) {
 }
 
 // Function to determine and extract an integer from the string
-std::pair<int, int> determine_str(const std::string& s, int length_s, int i) {
-    int current_int = 0;
+std::pair<size_t, size_t> determine_str(const std::string& s, size_t length_s, size_t i) {
+    size_t current_int = 0;
     while (i < length_s && std::isdigit(s[i])) {
         current_int = current_int * 10 + (s[i] - '0');
         i++;
     }
-    return std::pair<int, int>(i, current_int);
+    return std::pair<size_t, size_t>(i, current_int);
 }
 
 // Function to decompose a string with snarl information
 std::vector<std::string> decompose_string(const std::string& s) {
     std::vector<std::string> result;
     size_t i = 0;
-    int length_s = s.size();
+    size_t length_s = s.size();
     int prev_int = -1; // Placeholder for "None"
     char prev_sym = '\0'; // Placeholder for "None"
 
@@ -45,8 +45,8 @@ std::vector<std::string> decompose_string(const std::string& s) {
 }
 
 // Function to decompose a list of snarl strings
-std::vector<std::vector<std::string> > decompose_snarl(const std::vector<std::string>& lst) {
-    std::vector<std::vector<std::string> > decomposed_list;
+std::vector<std::vector<std::string>> decompose_snarl(const std::vector<std::string>& lst) {
+    std::vector<std::vector<std::string>> decomposed_list;
     for (const auto& s : lst) {
         decomposed_list.push_back(decompose_string(s));
     }
@@ -54,21 +54,21 @@ std::vector<std::vector<std::string> > decompose_snarl(const std::vector<std::st
 }
 
 // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
-size_t getOrAddIndex(std::unordered_map<std::string, size_t>& orderedMap, const std::string& key, int lengthOrderedMap) {
+size_t getOrAddIndex(std::unordered_map<std::string, size_t>& orderedMap, const std::string& key, size_t lengthOrderedMap) {
     auto it = orderedMap.find(key);
     if (it != orderedMap.end()) {
         return it->second;
     } else {
-        int newIndex = lengthOrderedMap;
+        size_t newIndex = lengthOrderedMap;
         orderedMap[key] = newIndex;
         return newIndex;
     }
 }
 
 // Add True to the matrix if snarl is found
-void SnarlParser::pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, int>& rowHeaderDict, size_t indexColumn) {
+void SnarlParser::pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn) {
     // Retrieve or add the index in one step and calculate length once
-    int lengthOrderedMap = rowHeaderDict.size();
+    size_t lengthOrderedMap = rowHeaderDict.size();
     size_t idxSnarl = getOrAddIndex(rowHeaderDict, decomposedSnarl, lengthOrderedMap);
 
     // Check if a new matrix chunk is needed
@@ -84,7 +84,7 @@ void SnarlParser::pushMatrix(const std::string& decomposedSnarl, std::unordered_
 // Main function that parses the VCF file and fills the matrix
 void SnarlParser::fill_matrix() {
     VCFParser vcfParser(vcf_path);
-    std::unordered_map<std::string, int> row_header_dict;
+    std::unordered_map<std::string, size_t> row_header_dict;
 
     // Read and process variants
     while (vcfParser.hasNext()) {
@@ -95,7 +95,7 @@ void SnarlParser::fill_matrix() {
 
         // Extract and split `AT` field from the INFO field
         std::vector<std::string> snarl_list = vcfParser.getATInfo();
-        std::vector<std::vector<std::string> > list_list_decomposed_snarl = decompose_snarl(snarl_list);
+        std::vector<std::vector<std::string>> list_list_decomposed_snarl = decompose_snarl(snarl_list);
 
         // Process genotypes and fill matrix
         for (size_t index_column = 0; index_column < genotypes.size(); ++index_column) {
@@ -121,7 +121,7 @@ void SnarlParser::fill_matrix() {
 
 std::vector<int> identify_correct_path(
     const std::vector<std::string>& decomposed_snarl, 
-    const std::unordered_map<std::string, int>& row_headers_dict, 
+    const std::unordered_map<std::string, size_t>& row_headers_dict, 
     std::vector<int>& srr_save, const Matrix& matrix) {
 
     std::vector<int> rows_to_check;
@@ -145,7 +145,7 @@ std::vector<int> identify_correct_path(
     for (int row : rows_to_check) {
         extracted_rows.push_back(matrix.get_matrix()[row]);
     }
-    
+
     // Find columns where all values are 1 (or true if row is std::vector<bool>)
     std::vector<int> idx_srr_save;
     if (!extracted_rows.empty()) {

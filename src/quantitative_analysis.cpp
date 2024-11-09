@@ -83,7 +83,7 @@ std::tuple<double, double, double> linear_regression(
 // Function to create the quantitative table
 std::unordered_map<std::string, std::vector<int>> create_quantitative_table(const std::vector<std::string>& column_headers, const std::vector<std::string>& list_samples, Matrix& matrix) {
     // Retrieve row headers dictionary
-    std::unordered_map<std::string, int> row_headers_dict = matrix.get_row_header();
+    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
     int length_sample = list_samples.size();
 
     std::vector<int> srr_save(length_sample);

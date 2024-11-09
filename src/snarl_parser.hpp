@@ -20,7 +20,7 @@ public:
     SnarlParser(const std::string& vcf_path);
 
     // Add True to the matrix if snarl is found
-    void pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, int>& rowHeaderDict, size_t indexColumn);
+    void pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
 
     // Main function that parses the VCF file and fills the matrix
     void fill_matrix();
@@ -36,7 +36,7 @@ public:
 };
 
 // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
-size_t getOrAddIndex(std::unordered_map<std::string, int>& orderedMap, const std::string& key, int lengthOrderedMap);
+size_t getOrAddIndex(std::unordered_map<std::string, size_t>& orderedMap, const std::string& key, size_t lengthOrderedMap);
 
 // Function to decompose a string with snarl information
 std::vector<std::string> decompose_string(const std::string& s);
@@ -45,11 +45,11 @@ std::vector<std::string> decompose_string(const std::string& s);
 std::vector<std::string> split(const std::string& str, char delimiter);
 
 // Function to determine and extract an integer from the string
-std::pair<int, int> determine_str(const std::string& s, int length_s, int i);
+std::pair<size_t, size_t> determine_str(const std::string& s, size_t length_s, size_t i);
 
 // Function to decompose a list of snarl strings
-std::vector<std::vector<std::string> > decompose_snarl(const std::vector<std::string>& lst);
+std::vector<std::vector<std::string>> decompose_snarl(const std::vector<std::string>& lst);
 
 std::vector<int> identify_correct_path(const std::vector<std::string>& decomposed_snarl, 
-                                        const std::unordered_map<std::string, int>& row_headers_dict, 
+                                        const std::unordered_map<std::string, size_t>& row_headers_dict, 
                                         std::vector<int>& srr_save, const Matrix& matrix);
