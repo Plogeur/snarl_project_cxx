@@ -1,34 +1,61 @@
 #include "vcf_parser.hpp"
 
-// Constructor: Opens the VCF file and parses the header
+// Constructor that opens the VCF file
 VCFParser::VCFParser(const std::string& filename) : file(filename) {
-    file.open(filename);
     if (!file.is_open()) {
-        throw std::runtime_error("Could not open VCF file.");
+        throw std::runtime_error("Failed to open VCF file: " + filename);
     }
-    parseHeader();
 }
 
-// Destructor: Closes the VCF file if it is open
+// Destructor that closes the file stream
 VCFParser::~VCFParser() {
     if (file.is_open()) {
         file.close();
     }
 }
 
-// Checks if there are more lines to read in the VCF file
-bool VCFParser::hasNext() {
-    return !file.eof();
+// Constructor for the begin iterator
+VCFParser::Iterator::Iterator(std::ifstream* file) : file(file) {
+    ++(*this);  // Load the first line
 }
 
-// Reads the next variant from the VCF file
-void VCFParser::nextVariant() {
+// Default constructor for the end iterator
+VCFParser::Iterator::Iterator() : file(nullptr) {}
+
+
+// Prefix increment to load the next variant
+VCFParser::Iterator& VCFParser::Iterator::operator++() {
+    loadNextVariant();
+    return *this;
+}
+
+// Dereference operator to access the current variant
+const Variant& VCFParser::Iterator::operator*() const {
+    return currentVariant;
+}
+
+// Comparison operator for end detection
+bool VCFParser::Iterator::operator!=(const Iterator& other) const {
+    return file != other.file;
+}
+
+// Load the next variant from the file
+void VCFParser::Iterator::loadNextVariant() {
     std::string line;
-    if (std::getline(file, line)) {
-        parseVariant(line);
+    if (file && std::getline(*file, line)) {
+        currentVariant = VCFParser::parseVariant(line);  // Parse the line into a Variant object
     } else {
-        throw std::runtime_error("Error reading next variant.");
+        file = nullptr;  // End of file reached
     }
+}
+
+// Iterator access methods for range-based for loop
+VCFParser::Iterator VCFParser::begin() {
+    return Iterator(&file);
+}
+
+VCFParser::Iterator VCFParser::end() {
+    return Iterator();
 }
 
 // Gets the AT information for the current variant
@@ -48,39 +75,42 @@ const std::vector<std::string>& VCFParser::getSampleNames() const {
 
 // Parses the VCF header to extract sample names
 void VCFParser::parseHeader() {
-
-    file.clear();  // Ensure the file stream is ready
-    file.seekg(0, std::ios::beg);  // Reset to the beginning of the file
+    file.clear();                      // Clear any flags in the file stream
+    file.seekg(0, std::ios::beg);      // Move the file stream to the beginning
 
     std::string line;
     while (std::getline(file, line)) {
 
         if (line.empty()) {
-            continue;  // Skip any empty lines
+            continue;                  // Skip any empty lines
         }
 
+        // Stop reading the header once we encounter a non-comment line
         if (line[0] != '#') {
-            break;  // Stop when we hit the data lines
+            file.seekg(-line.size() - 1, std::ios::cur);  // Go back to the start of this line
+            break;
         }
 
+        // Process the header line that starts with "#CHROM"
         if (line.substr(0, 6) == "#CHROM") {
             std::istringstream headerStream(line);
             std::string sampleName;
+            
+            // Skip the mandatory VCF columns
+            for (int i = 0; i < 9; ++i) {
+                headerStream >> sampleName;
+            }
+            
+            // Read remaining entries as sample names
             while (headerStream >> sampleName) {
-                if (sampleName != "#CHROM" && sampleName != "POS" &&
-                    sampleName != "ID" && sampleName != "REF" &&
-                    sampleName != "ALT" && sampleName != "QUAL" &&
-                    sampleName != "FILTER" && sampleName != "INFO" &&
-                    sampleName != "FORMAT") {
-                    sampleNames.push_back(sampleName);
-                }
+                sampleNames.push_back(sampleName);
             }
         }
     }
 }
 
 // Parses a variant line from the VCF file and extracts genotype and AT field
-void VCFParser::parseVariant(const std::string& line) {
+Variant VCFParser::parseVariant(const std::string& line) {
     std::istringstream variantStream(line);
     std::string columnData;
     std::string infoField;
@@ -107,6 +137,8 @@ void VCFParser::parseVariant(const std::string& line) {
 
     // Extract AT field from the INFO column
     atInfo = extractATField(infoField);
+    
+    return Variant(atInfo, genotypes)
 }
 
 // Extracts the genotype from the genotype string

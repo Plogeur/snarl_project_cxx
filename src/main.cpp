@@ -57,15 +57,11 @@ int main(int argc, char* argv[]) {
         std::cout << "Group/Snarl file format is correct." << std::endl;
 
         // Initialize the SnarlProcessor with the VCF path
-        auto start_1 = std::chrono::high_resolution_clock::now();
         SnarlParser vcf_object(vcf_path);
-        auto end_1 = std::chrono::high_resolution_clock::now();
-        std::cout << "Time SnarlParser: " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
-
-        auto start_2 = std::chrono::high_resolution_clock::now();
+        auto start_1 = std::chrono::high_resolution_clock::now();
         vcf_object.fill_matrix();
-        auto end_2 = std::chrono::high_resolution_clock::now();
-        std::cout << "Time Matrix: " << std::chrono::duration<double>(end_2 - start_2).count() << " s" << std::endl;
+        auto end_1 = std::chrono::high_resolution_clock::now();
+        std::cout << "Time Matrix: " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
 
         // Parse the snarl file
         start_1 = std::chrono::high_resolution_clock::now();

@@ -83,21 +83,18 @@ void SnarlParser::pushMatrix(const std::string& decomposedSnarl, std::unordered_
 
 // Main function that parses the VCF file and fills the matrix
 void SnarlParser::fill_matrix() {
-    VCFParser vcfParser(vcf_path);
+    // Track overall start time
+    auto start_total = std::chrono::high_resolution_clock::now();
     std::unordered_map<std::string, size_t> row_header_dict;
 
     // Read and process variants
-    while (vcfParser.hasNext()) {
-        vcfParser.nextVariant();
+    for (const Variant& variant : vcfParser) {
 
-        // Extract genotypes
-        const std::vector<std::vector<int> >& genotypes = vcfParser.getGenotypes();
-
-        // Extract and split `AT` field from the INFO field
-        std::vector<std::string> snarl_list = vcfParser.getATInfo();
-        std::vector<std::vector<std::string>> list_list_decomposed_snarl = decompose_snarl(snarl_list);
+        const std::vector<std::vector<int>>& genotypes = variant.genotypes;
+        const std::vector<std::string>& atInfo = variant.atInfo;
 
         // Process genotypes and fill matrix
+        auto start_processing = std::chrono::high_resolution_clock::now();
         for (size_t index_column = 0; index_column < genotypes.size(); ++index_column) {
             int allele_1 = genotypes[index_column][0];
             int allele_2 = genotypes[index_column][1];
@@ -107,16 +104,36 @@ void SnarlParser::fill_matrix() {
                 continue;
             }
 
+            // Measure the time taken to push each allele into the matrix
+            auto start_allele = std::chrono::high_resolution_clock::now();
             for (auto& decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
                 pushMatrix(decompose_allele_1, row_header_dict, col_idx);
             }
-
-            for (auto& decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
-                pushMatrix(decompose_allele_2, row_header_dict, col_idx);
+            for (auto& decompose_allele_1 : list_list_decomposed_snarl[allele_2]) {
+                pushMatrix(decompose_allele_1, row_header_dict, col_idx);
             }
+            auto end_allele = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed_allele = end_allele - start_allele;
+            std::cout << "Allele processing time for column " << index_column << ": " << elapsed_allele.count() << " seconds\n";
         }
+        auto end_processing = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed_processing = end_processing - start_processing;
+        std::cout << "Genotype processing time: " << elapsed_processing.count() << " seconds\n";
+
+        // Time setting row headers
+        auto start_row_header = std::chrono::high_resolution_clock::now();
         matrix.set_row_header(row_header_dict);
+        auto end_row_header = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed_row_header = end_row_header - start_row_header;
+        std::cout << "Row header setting time: " << elapsed_row_header.count() << " seconds\n";
+        std::cout << "---------------------------------------------------------------------------" << std::endl;
+        std::cout << "" << std::endl;
     }
+
+    // Track overall end time
+    auto end_total = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_total = end_total - start_total;
+    std::cout << "Total fill_matrix execution time: " << elapsed_total.count() << " seconds\n";
 }
 
 std::vector<int> identify_correct_path(
