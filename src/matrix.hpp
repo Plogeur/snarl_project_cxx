@@ -12,7 +12,7 @@ class Matrix {
 private:
     size_t default_row_number;                   // Default number of rows
     size_t column_number;                        // Number of columns
-    std::vector<std::vector<bool> > matrix_2D;      // 2D vector to represent the matrix
+    std::vector<bool> matrix_1D;                 // we can try bitset instead 
     std::unordered_map<std::string, size_t> row_header;
 
 public:
@@ -20,10 +20,10 @@ public:
     Matrix(size_t default_row_number = 1000000, size_t column_number = 2);
 
     // Getter for matrix
-    const std::vector<std::vector<bool> >& get_matrix() const;
+    const std::vector<bool>& get_matrix() const;
 
     // Setter for matrix
-    void set_matrix(const std::vector<std::vector<bool> >& expanded_matrix);
+    void set_matrix(const std::vector<bool>& expanded_matrix);
 
     // Getter for row header
     const std::unordered_map<std::string, size_t>& get_row_header() const;

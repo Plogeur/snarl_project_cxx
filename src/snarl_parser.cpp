@@ -7,7 +7,7 @@
 SnarlParser::SnarlParser(const std::string& vcf_path) : vcf_path(vcf_path) {
     VCFParser vcfParser(vcf_path);
     list_samples = vcfParser.getSampleNames();
-    matrix = Matrix(100000000, list_samples.size()*2);
+    matrix = Matrix(1000000, list_samples.size()*2);
 }
 
 // Function to determine and extract an integer from the string
@@ -111,8 +111,8 @@ void SnarlParser::fill_matrix() {
                 pushMatrix(decompose_allele_1, row_header_dict, col_idx);
             }
 
-            for (auto& decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
-                pushMatrix(decompose_allele_1, row_header_dict, col_idx);
+            for (auto& decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
+                pushMatrix(decompose_allele_2, row_header_dict, col_idx);
             }
         }
         matrix.set_row_header(row_header_dict);
@@ -122,7 +122,7 @@ void SnarlParser::fill_matrix() {
 std::vector<int> identify_correct_path(
     const std::vector<std::string>& decomposed_snarl, 
     const std::unordered_map<std::string, size_t>& row_headers_dict, 
-    std::vector<int>& srr_save, const Matrix& matrix) {
+    std::vector<int>& srr_save, const Matrix& matrix, const size_t num_cols) {
 
     std::vector<int> rows_to_check;
 
@@ -143,13 +143,14 @@ std::vector<int> identify_correct_path(
     // Extract the rows to check
     std::vector<std::vector<bool>> extracted_rows;
     for (int row : rows_to_check) {
-        extracted_rows.push_back(matrix.get_matrix()[row]);
+        for (size_t i = row; i < row + num_cols; ++i) {
+            extracted_rows[row].push_back(matrix.get_matrix()[i]);
+        }
     }
 
     // Find columns where all values are 1 (or true if row is std::vector<bool>)
     std::vector<int> idx_srr_save;
     if (!extracted_rows.empty()) {
-        int num_cols = extracted_rows[0].size();
         
         // Ensure all rows have the same number of columns
         for (const auto& row : extracted_rows) {
@@ -161,7 +162,7 @@ std::vector<int> identify_correct_path(
         }
 
         // Check each column
-        for (int col = 0; col < num_cols; ++col) {
+        for (size_t col = 0; col < num_cols; ++col) {
             bool all_ones = true;
             
             for (const auto& row : extracted_rows) {

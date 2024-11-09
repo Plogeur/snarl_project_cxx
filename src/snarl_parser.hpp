@@ -6,8 +6,9 @@
 #include <fstream>
 #include <unordered_set>
 #include <sstream>
-#include <utility> // For std::pair
-#include <iostream> // For std::cout, std::cerr
+#include <utility>
+#include <iostream>
+#include <chrono>
 #include "matrix.hpp"
 
 // SnarlParser class declaration
@@ -52,4 +53,4 @@ std::vector<std::vector<std::string>> decompose_snarl(const std::vector<std::str
 
 std::vector<int> identify_correct_path(const std::vector<std::string>& decomposed_snarl, 
                                         const std::unordered_map<std::string, size_t>& row_headers_dict, 
-                                        std::vector<int>& srr_save, const Matrix& matrix);
+                                        std::vector<int>& srr_save, const Matrix& matrix, const size_t num_cols);
