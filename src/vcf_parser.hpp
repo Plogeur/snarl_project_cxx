@@ -23,6 +23,23 @@ public:
     VCFParser(const std::string& filename);
     ~VCFParser();
 
+   // Getter of list_samples
+    const std::vector<std::string>& getSampleNames();
+
+    static Variant parseVariant(const std::string& line);
+
+    std::vector<std::string> extractATField(const std::string& infoField);
+
+    std::vector<std::string> split(const std::string& s, char delimiter);
+
+    std::vector<std::string> getATInfo() const;
+
+    const std::vector<std::vector<int> >& getGenotypes() const;
+
+    std::vector<int> extractGenotype(const std::string& genotypeStr);
+
+    void parseHeader();
+
     // Iterator class for range-based for loop
     class Iterator {
     public:
@@ -46,6 +63,4 @@ public:
 private:
     std::ifstream file;
     std::vector<std::string> sampleNames;
-
-    Variant parseVariant(const std::string& line);
 };

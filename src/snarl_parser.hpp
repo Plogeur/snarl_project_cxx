@@ -10,13 +10,14 @@
 #include <iostream>
 #include <chrono>
 #include "matrix.hpp"
+#include "vcf_parser.hpp"
 
 // SnarlParser class declaration
 class SnarlParser {
 public:
-    std::vector<std::string> list_samples;
     std::string vcf_path;
     Matrix matrix; // Matrix(size_t default_row_number = 1000000, size_t column_number = 2);
+    VCFParser vcfParser;
 
     SnarlParser(const std::string& vcf_path);
 
@@ -49,7 +50,7 @@ std::vector<std::string> split(const std::string& str, char delimiter);
 std::pair<size_t, size_t> determine_str(const std::string& s, size_t length_s, size_t i);
 
 // Function to decompose a list of snarl strings
-std::vector<std::vector<std::string>> decompose_snarl(const std::vector<std::string>& lst);
+const std::vector<std::vector<std::string>> decompose_snarl(const std::vector<std::string>& lst);
 
 std::vector<int> identify_correct_path(const std::vector<std::string>& decomposed_snarl, 
                                         const std::unordered_map<std::string, size_t>& row_headers_dict, 

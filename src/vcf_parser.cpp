@@ -110,11 +110,12 @@ void VCFParser::parseHeader() {
 }
 
 // Parses a variant line from the VCF file and extracts genotype and AT field
-Variant VCFParser::parseVariant(const std::string& line) {
+static Variant VCFParser::parseVariant(const std::string& line) {
     std::istringstream variantStream(line);
     std::string columnData;
     std::string infoField;
     std::string genotypeStr;
+    std::vector<std::vector<int>> genotypes;
 
     // Skip the first 9 columns (CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT)
     for (int i = 0; i < 9; ++i) {
@@ -123,9 +124,6 @@ Variant VCFParser::parseVariant(const std::string& line) {
             infoField = columnData; // Capture the INFO column for parsing
         }
     }
-
-    // Clear previous genotype data
-    genotypes.clear();
 
     // Read the genotype data for each sample
     for (const auto& sample : sampleNames) {

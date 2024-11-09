@@ -5,9 +5,8 @@
 #include "quantitative_analysis.hpp"
 
 SnarlParser::SnarlParser(const std::string& vcf_path) : vcf_path(vcf_path) {
-    VCFParser vcfParser(vcf_path);
-    list_samples = vcfParser.getSampleNames();
-    matrix = Matrix(1000000, list_samples.size()*2);
+    vcfParser = VCFParser(vcf_path);
+    matrix = Matrix(1000000, vcfParser.getSampleNames().size()*2);
 }
 
 // Function to determine and extract an integer from the string
@@ -45,7 +44,7 @@ std::vector<std::string> decompose_string(const std::string& s) {
 }
 
 // Function to decompose a list of snarl strings
-std::vector<std::vector<std::string>> decompose_snarl(const std::vector<std::string>& lst) {
+const std::vector<std::vector<std::string>> decompose_snarl(const std::vector<std::string>& lst) {
     std::vector<std::vector<std::string>> decomposed_list;
     for (const auto& s : lst) {
         decomposed_list.push_back(decompose_string(s));
@@ -91,7 +90,8 @@ void SnarlParser::fill_matrix() {
     for (const Variant& variant : vcfParser) {
 
         const std::vector<std::vector<int>>& genotypes = variant.genotypes;
-        const std::vector<std::string>& atInfo = variant.atInfo;
+        const std::vector<std::string>& snarl_list = variant.atInfo;
+        const std::vector<std::vector<std::string>> list_list_decomposed_snarl = decompose_snarl(snarl_list);
 
         // Process genotypes and fill matrix
         auto start_processing = std::chrono::high_resolution_clock::now();
@@ -218,7 +218,7 @@ void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
-        std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, list_samples, matrix);
+        std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, vcfParser.getSampleNames(), matrix);
         auto stats = binary_stat_test(df);
 
         std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
@@ -249,7 +249,7 @@ void SnarlParser::quantitative_table(const std::unordered_map<std::string, std::
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
-        std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(list_snarl, list_samples, matrix);
+        std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(list_snarl, vcfParser.getSampleNames(), matrix);
         
         // std::make_tuple(se, beta, p_value)
         std::tuple<double, double, double> tuple_info = linear_regression(df, quantitative_phenotype);
