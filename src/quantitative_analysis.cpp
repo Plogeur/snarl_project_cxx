@@ -77,14 +77,21 @@ std::tuple<double, double, double> linear_regression(
     double t_stat = beta / se;
     double p_value = 2 * (1.0 - std::erf(std::abs(t_stat) / std::sqrt(2)));  // Using the error function approximation
 
-    return std::make_tuple(p_value, se, beta);  // Return the p-value, SE, and beta as a tuple
+    return std::make_tuple(se, beta, p_value);
 }
 
 // Function to create the quantitative table
-std::unordered_map<std::string, std::vector<int>> create_quantitative_table(const std::vector<std::string>& column_headers) {
+std::unordered_map<std::string, std::vector<int>> create_quantitative_table(const std::vector<std::string>& column_headers, std::vector<std::string> list_samples) {
     // Retrieve row headers dictionary
-    std::map<std::string, int> row_headers_dict = get_row_header();
+    std::unordered_map<std::string, int> row_headers_dict = get_row_header();
     int length_sample = list_samples.size();
+
+    std::vector<int> srr_save(length_sample);
+    
+    // Fill idx_srr_save with indices
+    for (int i = 0; i < length_sample; ++i) {
+        srr_save[i] = i;
+    }
 
     // Initialize a zero matrix for genotypes
     std::vector<std::vector<int>> genotypes(length_sample, std::vector<int>(column_headers.size(), 0));
@@ -95,7 +102,7 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(cons
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
 
         // Identify correct paths
-        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, std::vector<int>(length_sample));
+        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, srr_save);
 
         for (int idx : idx_srr_save) {
             int srr_idx = idx / 2;  // Adjust index to correspond to the sample index

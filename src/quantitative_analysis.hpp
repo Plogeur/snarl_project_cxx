@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <unordered_map>
 #include <numeric>
 #include <stdexcept>
 #include <algorithm>
@@ -25,6 +26,6 @@ std::tuple<double, double, double> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, float>& quantitative_phenotype);
 
-std::unordered_map<std::string, std::vector<int>> create_quantitative_table(const std::vector<std::string>& column_headers);
+std::unordered_map<std::string, std::vector<int>> create_quantitative_table(const std::vector<std::string>& column_headers, std::vector<std::string> list_samples);
 
 #endif

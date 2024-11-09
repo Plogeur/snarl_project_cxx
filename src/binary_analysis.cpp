@@ -185,10 +185,10 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
 
 std::vector<std::vector<int>> create_binary_table(
     const std::unordered_map<std::string, bool>& groups, 
-    const std::vector<std::string>& list_path_snarl) 
+    const std::vector<std::string>& list_path_snarl, 
+    std::vector<std::string> list_samples) 
 {
-    std::map<std::string, int> row_headers_dict = matrix.get_row_header();  // Assuming matrix is accessible
-    std::vector<std::string> list_samples = this->list_samples;             // Assuming list_samples is accessible
+    std::unordered_map<std::string, int> row_headers_dict = matrix.get_row_header();
     size_t length_column_headers = list_path_snarl.size();
 
     // Initialize g0 and g1 with zeros, corresponding to the length of column_headers

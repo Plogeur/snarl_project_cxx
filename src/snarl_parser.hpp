@@ -13,6 +13,10 @@
 // SnarlParser class declaration
 class SnarlParser {
 public:
+    std::vector<std::string> list_samples;
+    std::string vcf_path;
+    Matrix matrix; // Matrix(size_t default_row_number = 1000000, size_t column_number = 2);
+    
     SnarlParser(const std::string& vcf_path);
 
     // Function to split a string by a delimiter
@@ -36,6 +40,10 @@ public:
     // Main function that parses the VCF file and fills the matrix
     void fill_matrix();
 
+    std::vector<int> identify_correct_path(const std::vector<std::string>& decomposed_snarl, 
+                                            const std::unordered_map<std::string, int>& row_headers_dict, 
+                                            std::vector<int>& srr_save);
+
     void binary_table(const std::unordered_map<std::string, std::vector<std::string> >& snarls,
                         const std::unordered_map<std::string, bool>& binary_groups,
                         const std::string& output = "output/binary_output.tsv");
@@ -44,8 +52,4 @@ public:
                                 const std::unordered_map<std::string, float>& quantitative,
                                 const std::string& output = "output/quantitative_output.tsv");
 
-private:
-    std::vector<std::string> list_samples;
-    Matrix matrix; // Matrix(size_t default_row_number = 1000000, size_t column_number = 2);
-    std::string vcf_path;
 };

@@ -12,7 +12,7 @@ private:
     size_t default_row_number;                   // Default number of rows
     size_t column_number;                        // Number of columns
     std::vector<std::vector<bool> > matrix_2D;      // 2D vector to represent the matrix
-    std::vector<std::string> row_header;        // Row header can be stored as strings
+    std::unordered_map<std::string, int> row_header;
 
 public:
     // Constructor
@@ -25,7 +25,7 @@ public:
     void set_matrix(const std::vector<std::vector<bool> >& expanded_matrix);
 
     // Getter for row header
-    const std::vector<std::string>& get_row_header() const;
+    const std::unordered_map<std::string, int>& get_row_header() const;
 
     size_t rowCount() const;
 

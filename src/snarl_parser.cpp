@@ -120,6 +120,58 @@ void fill_matrix() {
     }
 }
 
+std::vector<int> identify_correct_path(
+    const std::vector<std::string>& decomposed_snarl, 
+    const std::unordered_map<std::string, int>& row_headers_dict, 
+    std::vector<int>& srr_save
+) {
+    std::vector<int> rows_to_check;
+
+    // Loop through decomposed snarl
+    for (const auto& snarl : decomposed_snarl) {
+        if (snarl == "*") {
+            continue;  // Skip this snarl if it's "*"
+        }
+
+        auto it = row_headers_dict.find(snarl);
+        if (it != row_headers_dict.end()) {
+            rows_to_check.push_back(it->second);  // Add row index if found
+        } else {
+            return {};  // Return empty vector if snarl is not found in the dictionary
+        }
+    }
+
+    // Extract the rows to check (Assuming matrix extraction logic is handled elsewhere)
+    // For illustration, assume matrix is available as `matrix`
+    std::vector<std::vector<int>> extracted_rows;
+    for (int row : rows_to_check) {
+        extracted_rows.push_back(matrix[row]);  // Assume matrix[row] is accessible
+    }
+
+    // Find columns where all values are 1
+    std::vector<int> idx_srr_save;
+    if (!extracted_rows.empty()) {
+        int num_cols = extracted_rows[0].size();
+        for (int col = 0; col < num_cols; ++col) {
+            bool all_ones = true;
+            for (const auto& row : extracted_rows) {
+                if (row[col] != 1) {
+                    all_ones = false;
+                    break;
+                }
+            }
+
+            if (all_ones) {
+                idx_srr_save.push_back(col);  // Store column index where all values are 1
+            }
+        }
+    }
+
+    // Assign to srr_save and return the result
+    srr_save = idx_srr_save;
+    return srr_save;
+}
+
 // Binary Table Generation
 void binary_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
                                   const std::unordered_map<std::string, bool>& binary_groups,
@@ -137,7 +189,7 @@ void binary_table(const std::unordered_map<std::string, std::vector<std::string>
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
-        std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl);
+        std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, list_samples);
         auto stats = binary_stat_test(df);
 
         std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
@@ -163,18 +215,21 @@ void quantitative_table(const std::unordered_map<std::string, std::vector<std::s
     }
 
     // Write headers
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP\n";
+    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tSE\tBETA\tP\n";
     outf.write(headers.c_str(), headers.size());
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
-        std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(list_snarl);
-        // const std::unordered_map<std::string, float>& quantitative_phenotype
-        double pvalue = linear_regression(df, quantitative_phenotype);
+        std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(list_snarl, list_samples);
+        
+        // std::make_tuple(se, beta, p_value)
+        std::tuple<double, double, double> tuple_info = linear_regression(df, quantitative_phenotype);
 
         std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
         std::stringstream data;
-        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var << "\t" << ref << "\t" << alt << "\t" << pvalue << "\n";
+        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var << "\t" << ref << "\t" << alt
+            << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
+            << "\t" << std::get<2>(tuple_info) << "\n";
 
         outf.write(data.str().c_str(), data.str().size());
     }

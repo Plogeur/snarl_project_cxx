@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <numeric>
 #include <algorithm>
+#include <unordered_map>
+#include <map>
 
 // ------------------------ Chi2 exact test ------------------------
 
@@ -40,6 +42,9 @@ double fastFishersExactTest(const std::vector<std::vector<int>>& table);
 
 std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df);
 
-std::vector<std::vector<int>> create_binary_table(const std::unordered_map<std::string, bool>& groups, const std::vector<std::string>& list_path_snarl);
-
+std::vector<std::vector<int>> create_binary_table(
+    const std::unordered_map<std::string, bool>& groups, 
+    const std::vector<std::string>& list_path_snarl, 
+    std::vector<std::string> list_samples);
+    
 #endif // CHI2FISHERTEST_HPP
