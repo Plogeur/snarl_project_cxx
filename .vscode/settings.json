@@ -143,7 +143,10 @@
     "cfenv": "cpp",
     "cinttypes": "cpp",
     "typeindex": "cpp",
-    "valarray": "cpp"
+    "valarray": "cpp",
+    "__tree": "cpp",
+    "future": "cpp",
+    "queue": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled"
 }

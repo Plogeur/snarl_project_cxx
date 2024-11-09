@@ -137,7 +137,7 @@ void binary_table(const std::unordered_map<std::string, std::vector<std::string>
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
-        auto df = create_binary_table(binary_groups, list_snarl);
+        std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl);
         auto stats = binary_stat_test(df);
 
         std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
@@ -153,7 +153,7 @@ void binary_table(const std::unordered_map<std::string, std::vector<std::string>
 
 // Quantitative Table Generation
 void quantitative_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
-                                        const std::unordered_map<std::string, float>& quantitative,
+                                        const std::unordered_map<std::string, float>& quantitative_phenotype,
                                         const std::string& output) 
 {
     std::ofstream outf(output, std::ios::binary);
@@ -168,8 +168,9 @@ void quantitative_table(const std::unordered_map<std::string, std::vector<std::s
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
-        auto df = create_quantitative_table(list_snarl);
-        double pvalue = linear_regression(df, quantitative);
+        std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(list_snarl);
+        // const std::unordered_map<std::string, float>& quantitative_phenotype
+        double pvalue = linear_regression(df, quantitative_phenotype);
 
         std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
         std::stringstream data;

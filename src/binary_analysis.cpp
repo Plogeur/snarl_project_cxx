@@ -43,6 +43,28 @@ int calculateDegreesOfFreedom(int rows, int cols) {
     return (rows - 1) * (cols - 1);
 }
 
+// Function to compute the regularized incomplete gamma function (for Chi-square CDF approximation)
+double gammaIncomplete(double s, double x) {
+    const double epsilon = 1e-10;
+    double sum = 1.0 / s;
+    double term = sum;
+    int n = 1;
+
+    while (term > epsilon) {
+        term *= x / (s + n);
+        sum += term;
+        ++n;
+    }
+
+    return sum * exp(-x + s * log(x) - std::lgamma(s));
+}
+
+// Function to calculate the p-value from Chi-square statistic using incomplete gamma function
+double chiSquarePValue(double chiSquare, int degreesOfFreedom) {
+    // The p-value is the tail probability of the Chi-square distribution
+    return 1.0 - gammaIncomplete(degreesOfFreedom / 2.0, chiSquare / 2.0);
+}
+
 // Function to perform the Chi-square test
 std::string chi2Test(const std::vector<std::vector<int>>& observed) {
     // Ensure the table has at least 2 rows and 2 columns and all cells have non-zero counts
@@ -68,9 +90,8 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
                 double chiSquare = chiSquareStatistic(observed);
                 int degreesOfFreedom = calculateDegreesOfFreedom(rows, cols);
 
-                // Use Boost to calculate the p-value from the Chi-square distribution
-                boost::math::chi_squared dist(degreesOfFreedom);
-                double pValue = 1 - cdf(dist, chiSquare); // 1 - CDF gives the p-value
+                // Calculate p-value without Boost (using the incomplete gamma function)
+                double pValue = chiSquarePValue(chiSquare, degreesOfFreedom);
 
                 return std::to_string(pValue);
             } catch (const std::exception& e) {
@@ -139,6 +160,27 @@ double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
     // Clean up memory
     delete[] logFacs;
     return exp(logpCutoff + log(pFraction));
+}
+
+// ------------------------ Binary table & stats ------------------------
+
+std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df) {
+    float fisher_p_value = fastFishersExactTest(df);
+    std::string chi2_p_value = chi2Test(df);
+    int group_I_path_I = df[0][0];
+    int group_I_path_II = df[0][1];
+    int group_II_path_I = df[1][0];
+    int group_II_path_II = df[1][1];
+
+    std::vector<std::string> result = {
+        std::to_string(fisher_p_value),
+        chi2_p_value,
+        std::to_string(group_I_path_I),
+        std::to_string(group_I_path_II),
+        std::to_string(group_II_path_I),
+        std::to_string(group_II_path_II)
+    };
+    return result;
 }
 
 std::vector<std::vector<int>> create_binary_table(

@@ -1,20 +1,30 @@
 #ifndef QUANTITATIVE_ANALYSIS_HPP
 #define QUANTITATIVE_ANALYSIS_HPP
 
-#include <Eigen/Dense>
 #include <vector>
-#include <cmath>   // for sqrt and erf
+#include <cmath>
 #include <iostream>
 #include <string>
 #include <map>
 #include <numeric>
+#include <stdexcept>
+#include <algorithm>
+#include <tuple>
 
-// Function to perform linear regression and return beta coefficients, standard errors, and p-values
-void linearRegression(const Eigen::MatrixXd& X, const Eigen::VectorXd& y, Eigen::VectorXd& beta, Eigen::VectorXd& se, Eigen::VectorXd& p_values);
+// Function to calculate the mean of a vector
+double mean(const std::vector<double>& v);
 
-// Function to calculate p-values based on the t-statistic
-double calculatePValue(double t_stat, int degrees_of_freedom);
+// Function to calculate the variance of a vector
+double variance(const std::vector<double>& v);
 
-std::vector<std::vector<int>> create_binary_table(const std::unordered_map<std::string, bool>& groups, const std::vector<std::string>& list_path_snarl);
+// Function to calculate the covariance between two vectors
+double covariance(const std::vector<double>& x, const std::vector<double>& y);
 
-#endif // LINEAR_REGRESSION_HPP
+// Linear regression function that returns a tuple of p_value, standard error (se), and beta
+std::tuple<double, double, double> linear_regression(
+    const std::unordered_map<std::string, std::vector<int>>& df,
+    const std::unordered_map<std::string, float>& quantitative_phenotype);
+
+std::unordered_map<std::string, std::vector<int>> create_quantitative_table(const std::vector<std::string>& column_headers);
+
+#endif
