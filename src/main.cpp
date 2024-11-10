@@ -3,7 +3,6 @@
 #include <unordered_map>
 #include <chrono>
 #include "snarl_parser.hpp"     
-#include "vcf_parser.hpp"
 #include "matrix.hpp"
 #include "arg_parser.hpp"
 

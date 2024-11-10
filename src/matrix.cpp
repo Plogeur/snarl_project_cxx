@@ -2,9 +2,12 @@
 
 // Constructor implementation
 Matrix::Matrix(size_t default_row_number, size_t column_number)
-    : default_row_number(default_row_number), column_number(column_number),
-    matrix_1D(default_row_number * column_number, false)
-{}
+    : default_row_number(default_row_number), column_number(column_number)
+{
+    unsigned long long int length_matrix = default_row_number * column_number; 
+    matrix_1D.reserve(length_matrix);
+    matrix_1D.resize(length_matrix, false);
+}
 
 // Getter for matrix
 const std::vector<bool>& Matrix::get_matrix() const {
@@ -36,17 +39,14 @@ void Matrix::set_matrix(const std::vector<bool>& expanded_matrix) {
     this->matrix_1D = expanded_matrix;
 }
 
-// Method to expand the matrix by adding rows
 void Matrix::expandMatrix() {
-    int current_rows = matrix_1D.size()/column_number;  // Number of rows
-    int new_rows = current_rows + default_row_number;
+    unsigned long long int current_rows = matrix_1D.size() / column_number;  // Current number of rows
+    unsigned long long int new_rows = current_rows + default_row_number;     // New total number of rows after expansion
+    unsigned long long int new_matrix_size = new_rows * column_number;     // New total number of rows after expansion
 
-    // Create a new matrix with the expanded size
-    std::vector<bool> expanded_matrix(new_rows * column_number, false);
-    expanded_matrix = matrix_1D;
-
-    // Update the matrix data with the expanded matrix
-    set_matrix(expanded_matrix);
+    // Reserve space if needed, and resize the vector to the new size
+    matrix_1D.reserve(new_matrix_size);          // Ensures capacity is sufficient
+    matrix_1D.resize(new_matrix_size, false);    // Resizes the vector and fills new elements with 'false'
 }
 
 // Add data at specified indices

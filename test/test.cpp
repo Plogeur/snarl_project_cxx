@@ -1,84 +1,142 @@
 #include <iostream>
+#include <fstream>
+#include <string>
 #include <vector>
-#include <unordered_map>
-#include <cmath>
-#include <tuple>
-#include <numeric>
+#include <chrono>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
-double mean(const std::vector<double>& v) {
-    return std::accumulate(v.begin(), v.end(), 0.0) / v.size();
+// Method 1: Buffered reading with custom buffer
+void read_buffered_lines(const std::string& filename) {
+    const size_t buffer_size = 1024 * 1024; // 1MB buffer
+    std::ifstream file(filename);
+    std::vector<char> buffer(buffer_size);
+
+    while (file.read(buffer.data(), buffer_size) || file.gcount() > 0) {
+        size_t buffer_end = file.gcount();
+        size_t line_start = 0;
+
+        for (size_t i = 0; i < buffer_end; ++i) {
+            if (buffer[i] == '\n') {
+                std::string line(buffer.begin() + line_start, buffer.begin() + i);
+                std::cout << line << std::endl;  // Print each line
+                line_start = i + 1; // Start next line
+            }
+        }
+
+        if (line_start < buffer_end) {
+            std::string remaining_line(buffer.begin() + line_start, buffer.begin() + buffer_end);
+            std::cout << remaining_line << std::endl;  // Print the remaining line
+        }
+    }
 }
 
-double variance(const std::vector<double>& v) {
-    double m = mean(v);
-    double var = 0.0;
-    for (double val : v) {
-        var += (val - m) * (val - m);
+// Method 2: Memory-mapped file for line parsing
+void read_mmap_lines(const std::string& filename) {
+    int fd = open(filename.c_str(), O_RDONLY);
+    if (fd == -1) return;
+
+    struct stat sb;
+    if (fstat(fd, &sb) == -1) {
+        close(fd);
+        return;
     }
-    return var / (v.size() - 1);
+
+    char* mapped = (char*)mmap(nullptr, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (mapped == MAP_FAILED) {
+        close(fd);
+        return;
+    }
+
+    char* start = mapped;
+    char* end = mapped + sb.st_size;
+    char* line_start = start;
+
+    while (start < end) {
+        if (*start == '\n') {
+            std::string line(line_start, start - line_start);
+            std::cout << line << std::endl;  // Print each line
+            line_start = start + 1;
+        }
+        ++start;
+    }
+
+    if (line_start < end) {
+        std::string remaining_line(line_start, end - line_start);
+        std::cout << remaining_line << std::endl;  // Print the last line if no newline at the end
+    }
+
+    munmap(mapped, sb.st_size);
+    close(fd);
 }
 
-double covariance(const std::vector<double>& x, const std::vector<double>& y) {
-    double mean_x = mean(x);
-    double mean_y = mean(y);
-    double cov = 0.0;
-    for (size_t i = 0; i < x.size(); ++i) {
-        cov += (x[i] - mean_x) * (y[i] - mean_y);
+// Method 3: Using std::istreambuf_iterator for line-by-line parsing
+void read_using_iterator(const std::string& filename) {
+    std::ifstream file(filename);
+    std::istreambuf_iterator<char> start(file), end;
+
+    std::string line;
+    for (; start != end; ++start) {
+        if (*start == '\n') {
+            std::cout << line << std::endl;  // Print each line
+            line.clear(); // Clear the current line
+        } else {
+            line.push_back(*start); // Add the character to the current line
+        }
     }
-    return cov / (x.size() - 1);
+
+    if (!line.empty()) {
+        std::cout << line << std::endl;  // Print any remaining text
+    }
 }
 
-std::tuple<double, double, double> linear_regression(const std::vector<std::vector<int>>& df, const std::unordered_map<std::string, float>& args) {
-    if (df.size() < 2 || df[0].size() != 2) {
-        throw std::invalid_argument("Input data should be a non-empty 2D vector with 2 columns (X, Y).");
+// Method 4: Standard getline approach
+void read_with_getline(const std::string& filename) {
+    std::ifstream file(filename);
+    std::string line;
+    while (std::getline(file, line)) {
+        std::cout << line << std::endl;  // Print each line
     }
+}
 
-    // Separate X and Y from the dataset
-    std::vector<double> X, Y;
-    for (const auto& row : df) {
-        X.push_back(static_cast<double>(row[0]));
-        Y.push_back(static_cast<double>(row[1]));
-    }
+// Benchmark each method
+void benchmark(const std::string& filename) {
+    auto start = std::chrono::high_resolution_clock::now();
+    std::chrono::microseconds duration;
 
-    // Calculate beta (slope) and intercept (alpha) for Y = alpha + beta * X
-    double beta = covariance(X, Y) / variance(X);
-    double alpha = mean(Y) - beta * mean(X);
+    std::cout << "Benchmarking buffered reading...\n";
+    start = std::chrono::high_resolution_clock::now();
+    read_buffered_lines(filename);
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::high_resolution_clock::now() - start);
+    std::cout << "Buffered reading duration: " << duration.count() << " microseconds\n";
 
-    // Calculate standard error (SE) of beta
-    double sum_errors_squared = 0.0;
-    for (size_t i = 0; i < X.size(); ++i) {
-        double predicted_y = alpha + beta * X[i];
-        double error = Y[i] - predicted_y;
-        sum_errors_squared += error * error;
-    }
-    double se = std::sqrt(sum_errors_squared / (X.size() - 2)) / std::sqrt(variance(X) * (X.size() - 1));
+    std::cout << "Benchmarking memory-mapped reading...\n";
+    start = std::chrono::high_resolution_clock::now();
+    read_mmap_lines(filename);
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::high_resolution_clock::now() - start);
+    std::cout << "Memory-mapped reading duration: " << duration.count() << " microseconds\n";
 
-    // Calculate t-statistic for beta and two-tailed p-value
-    double t_stat = beta / se;
-    double p_value = 2 * (1.0 - std::erf(std::abs(t_stat) / std::sqrt(2))); // Approximation using erf
+    std::cout << "Benchmarking iterator reading...\n";
+    start = std::chrono::high_resolution_clock::now();
+    read_using_iterator(filename);
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::high_resolution_clock::now() - start);
+    std::cout << "Iterator reading duration: " << duration.count() << " microseconds\n";
 
-    return std::make_tuple(p_value, se, beta);
+    std::cout << "Benchmarking std::getline reading...\n";
+    start = std::chrono::high_resolution_clock::now();
+    read_with_getline(filename);
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::high_resolution_clock::now() - start);
+    std::cout << "std::getline reading duration: " << duration.count() << " microseconds\n";
 }
 
 int main() {
-    // Sample data
-    std::vector<std::vector<int>> df = {
-        {1, 2},
-        {2, 4},
-        {3, 5},
-        {4, 4},
-        {5, 5}
-    };
-
-    std::unordered_map<std::string, float> args; // Not used in this example
-
-    // Perform linear regression
-    auto [p_value, se, beta] = linear_regression(df, args);
-
-    // Output results
-    std::cout << "P-value: " << p_value << std::endl;
-    std::cout << "Standard Error: " << se << std::endl;
-    std::cout << "Beta: " << beta << std::endl;
-
+    const std::string filename = "small_vcf.vcf";  // Replace with your file name
+    benchmark(filename);
     return 0;
 }
