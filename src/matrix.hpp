@@ -1,47 +1,29 @@
 #ifndef MATRIX_HPP
 #define MATRIX_HPP
 
-#pragma once
-
 #include <iostream>
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <cstdint>
 
 class Matrix {
-private:
-    size_t default_row_number;                   // Default number of rows
-    size_t column_number;                        // Number of columns
-    std::vector<bool> matrix_1D;                 // we can try bitset instead 
-    std::unordered_map<std::string, size_t> row_header;
-
 public:
-    // Constructor
-    Matrix(size_t default_row_number = 1000000, size_t column_number = 2);
-
-    // Getter for matrix
-    const std::vector<bool>& get_matrix() const;
-
-    // Setter for matrix
-    void set_matrix(const std::vector<bool>& expanded_matrix);
-
-    // Getter for row header
+    Matrix(size_t rows, size_t cols);
+    bool operator()(size_t row, size_t col);
+    void set(size_t row, size_t col);
+    const std::vector<uint8_t>& get_matrix() const;
     const std::unordered_map<std::string, size_t>& get_row_header() const;
-
-    // Getter for row count matrix
-    size_t rowCount() const;
-
-    // Getter for default row number
-    size_t get_default_row_number() const;
-
-    // expand matrix when is full (increase size by + default_row_number)
+    size_t getRows() const;
     void expandMatrix();
-
-    // Setter for row header
     void set_row_header(const std::unordered_map<std::string, size_t>& row_header);
 
-    // Add data at specified indices
-    void add_data(size_t idx_snarl, size_t idx_geno);
+private:
+    size_t rows_;
+    size_t cols_;
+    size_t default_row_number;
+    std::vector<uint8_t> matrix_1D;
+    std::unordered_map<std::string, size_t> row_header;
 };
 
 #endif

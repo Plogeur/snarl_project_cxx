@@ -3,12 +3,8 @@
 #include "binary_analysis.hpp"
 #include "quantitative_analysis.hpp"
 
-SnarlParser::SnarlParser(const std::string& vcf_path) : filename(vcf_path), file(vcf_path) {
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open file: " + vcf_path);
-    }
+SnarlParser::SnarlParser(const std::string& vcf_path) : filename(vcf_path), file(vcf_path), matrix(1000000, parseHeader().size() * 2) {
     sampleNames = parseHeader();
-    matrix = Matrix(1000000, sampleNames.size() * 2);
 }
 
 std::vector<std::string> SnarlParser::parseHeader() {
@@ -109,17 +105,18 @@ void SnarlParser::pushMatrix(const std::string& decomposedSnarl, std::unordered_
     size_t idxSnarl = getOrAddIndex(rowHeaderDict, decomposedSnarl, lengthOrderedMap);
 
     // Check if a new matrix chunk is needed
-    size_t currentRowsNumber = matrix.rowCount();
+    size_t currentRowsNumber = matrix.getRows();
     if (lengthOrderedMap > currentRowsNumber - 1) {
         matrix.expandMatrix();
     }
 
     // Add data to the matrix
-    matrix.add_data(idxSnarl, indexColumn);
+    matrix.set(idxSnarl, indexColumn);
 }
 
 // Main function that parses the VCF file and fills the matrix
 void SnarlParser::fill_matrix() {
+
     // Track overall start time
     auto start_total = std::chrono::high_resolution_clock::now();
     std::unordered_map<std::string, size_t> row_header_dict;
@@ -147,13 +144,16 @@ void SnarlParser::fill_matrix() {
             for (auto& decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
                 pushMatrix(decompose_allele_1, row_header_dict, col_idx);
             }
+
             for (auto& decompose_allele_1 : list_list_decomposed_snarl[allele_2]) {
                 pushMatrix(decompose_allele_1, row_header_dict, col_idx);
             }
+
             auto end_allele = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elapsed_allele = end_allele - start_allele;
             std::cout << "Allele processing time for column " << index_column << ": " << elapsed_allele.count() << " seconds\n";
         }
+
         auto end_processing = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed_processing = end_processing - start_processing;
         std::cout << "Genotype processing time: " << elapsed_processing.count() << " seconds\n";
@@ -172,13 +172,21 @@ void SnarlParser::fill_matrix() {
     auto end_total = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_total = end_total - start_total;
     std::cout << "Total fill_matrix execution time: " << elapsed_total.count() << " seconds\n";
+
+    std::cout << "Matrix : " << std::endl;
+    for (size_t i = 0; i < 5; ++i) {
+        for (size_t j = 0; j < 8; ++j) {
+            std::cout << matrix(i, j) << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 std::vector<int> identify_correct_path(
     const std::vector<std::string>& decomposed_snarl, 
     const std::unordered_map<std::string, size_t>& row_headers_dict, 
     std::vector<int>& srr_save, const Matrix& matrix, const size_t num_cols) {
-
     std::vector<int> rows_to_check;
 
     // Loop through decomposed snarl
@@ -195,13 +203,18 @@ std::vector<int> identify_correct_path(
         }
     }
 
-    // Extract the rows to check
-    std::vector<std::vector<bool>> extracted_rows;
-    for (int row : rows_to_check) {
-        for (size_t i = row; i < row + num_cols; ++i) {
-            extracted_rows[row].push_back(matrix.get_matrix()[i]);
+    std::cout << "identify_correct_path 1" << std::endl;
+    std::vector<std::vector<bool>> extracted_rows(rows_to_check.size());
+
+    for (size_t i = 0; i < rows_to_check.size(); i++) {
+        int row = rows_to_check[i];
+        
+        // Loop over the columns in the row and add each column's data to extracted_rows[i]
+        for (size_t j = row; j < row + num_cols; ++j) {
+            extracted_rows[i].push_back(matrix.get_matrix()[j]);
         }
     }
+    std::cout << "identify_correct_path 2" << std::endl;
 
     // Find columns where all values are 1 (or true if row is std::vector<bool>)
     std::vector<int> idx_srr_save;
@@ -215,6 +228,7 @@ std::vector<int> identify_correct_path(
                 throw std::runtime_error("Inconsistent row size in extracted_rows");
             }
         }
+        std::cout << "identify_correct_path 3" << std::endl;
 
         // Check each column
         for (size_t col = 0; col < num_cols; ++col) {
@@ -233,6 +247,8 @@ std::vector<int> identify_correct_path(
             }
         }
     }
+    
+    std::cout << "identify_correct_path 4" << std::endl;
 
     // Assign to srr_save and return the result
     srr_save = idx_srr_save;
@@ -280,17 +296,22 @@ void SnarlParser::quantitative_table(const std::unordered_map<std::string, std::
         std::cerr << "Error opening output file!" << std::endl;
         return;
     }
-
+    
     // Write headers
     std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tSE\tBETA\tP\n";
     outf.write(headers.c_str(), headers.size());
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
+        std::cout << "machin" << std::endl;
+
         std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(list_snarl, sampleNames, matrix);
-        
+        std::cout << "chose" << std::endl;
+
         // std::make_tuple(se, beta, p_value)
         std::tuple<double, double, double> tuple_info = linear_regression(df, quantitative_phenotype);
+
+        std::cout << "bidule" << std::endl;
 
         std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
         std::stringstream data;

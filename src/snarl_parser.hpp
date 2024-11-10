@@ -20,10 +20,10 @@ struct Variant {
 // SnarlParser class declaration
 class SnarlParser {
 public:
-    Matrix matrix; // Matrix(size_t default_row_number = 1000000, size_t column_number = 2);
     const std::string& filename;
-    std::vector<std::string> sampleNames;
     std::ifstream file;
+    Matrix matrix;
+    std::vector<std::string> sampleNames;
     
     SnarlParser(const std::string& vcf_path);
     void pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
@@ -38,7 +38,7 @@ public:
 };
 
 // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
-size_t getOrAddIndex(std::unordered_map<std::string, size_t>& orderedMap, const std::string& key, size_t lengthOrderedMap);
+unsigned long long int getOrAddIndex(std::unordered_map<std::string, unsigned long long int>& orderedMap, const std::string& key, unsigned long long int lengthOrderedMap);
 
 // Function to decompose a string with snarl information
 std::vector<std::string> decompose_string(const std::string& s);

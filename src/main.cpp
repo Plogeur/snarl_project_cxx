@@ -66,6 +66,8 @@ int main(int argc, char* argv[]) {
         start_1 = std::chrono::high_resolution_clock::now();
         auto snarl = parse_snarl_path_file(snarl_path);
 
+        std::cout << "s" << std::endl;
+
         // Process binary group file if provided
         if (!binary_path.empty()) {
             auto binary_group = parse_group_file(binary_path);
@@ -79,9 +81,12 @@ int main(int argc, char* argv[]) {
 
         // Process quantitative phenotype file if provided
         if (!quantitative_path.empty()) {
+            std::cout << "ss" << std::endl;
+
             auto quantitative = parse_pheno_file(quantitative_path);
 
             if (!output_path.empty()) {
+                std::cout << "sss" << std::endl;
                 vcf_object.quantitative_table(snarl, quantitative, output_path);
             } else {
                 vcf_object.quantitative_table(snarl, quantitative);

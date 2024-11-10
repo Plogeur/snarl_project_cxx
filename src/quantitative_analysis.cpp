@@ -51,7 +51,20 @@ std::tuple<double, double, double> linear_regression(
             Y.push_back(static_cast<double>(it->second));
         }
     }
+    
+    // Print X
+    std::cout << "X: ";
+    for (const double& value : X) {
+        std::cout << value << " ";
+    }
+    std::cout << std::endl;
 
+    // Print Y
+    std::cout << "Y: ";
+    for (const double& value : Y) {
+        std::cout << value << " ";
+    }
+    std::cout << std::endl;
     if (X.size() < 2 || Y.size() < 2 || X.size() != Y.size()) {
         throw std::invalid_argument("Data mismatch or insufficient data for linear regression.");
     }
@@ -102,11 +115,18 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
     // Fill in the matrix
     for (size_t col_idx = 0; col_idx < column_headers.size(); ++col_idx) {
         const std::string& path_snarl = column_headers[col_idx];
+
+        std::cout << " before decompose_string" << std::endl;
+
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
+
+        std::cout << "before identify_correct_path" << std::endl;
 
         // Identify correct paths
         std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, 
                                                                 srr_save, matrix, length_sample*2);
+
+        std::cout << "after identify_correct_path" << std::endl;
 
         for (int idx : idx_srr_save) {
             int srr_idx = idx / 2;  // Adjust index to correspond to the sample index
