@@ -38,7 +38,7 @@ void Matrix::expandMatrix() {
 }
 
 // Overloaded operator() to access elements as matrix(row, col)
-bool Matrix::operator()(size_t row, size_t col) {
+bool Matrix::operator()(size_t row, size_t col) const {
     size_t bitIndex = row * cols_ + col;
     size_t byteIndex = bitIndex / 8;
     size_t bitPosition = bitIndex % 8;

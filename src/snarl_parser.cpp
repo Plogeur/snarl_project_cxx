@@ -203,71 +203,50 @@ void SnarlParser::fill_matrix() {
 }
 
 std::vector<int> identify_correct_path(
-    const std::vector<std::string>& decomposed_snarl, 
-    const std::unordered_map<std::string, size_t>& row_headers_dict, 
-    std::vector<int>& srr_save, const Matrix& matrix, const size_t num_cols) {
+    const std::vector<std::string>& decomposed_snarl,
+    const std::unordered_map<std::string, size_t>& row_headers_dict,
+    const Matrix& matrix,
+    const size_t num_cols
+) {
     std::vector<int> rows_to_check;
+    std::cout << "num_cols : " << num_cols << std::endl;
 
-    // Loop through decomposed snarl
+    // Populate rows_to_check based on decomposed_snarl and row_headers_dict
     for (const auto& snarl : decomposed_snarl) {
-        if (snarl == "*") {
-            continue;  // Skip this snarl if it's "*"
+        if (snarl.find("*") != std::string::npos) {
+            continue; // Skip snarls containing "*"
         }
-
         auto it = row_headers_dict.find(snarl);
         if (it != row_headers_dict.end()) {
-            rows_to_check.push_back(it->second);  // Add row index if found
+            rows_to_check.push_back(it->second);
         } else {
-            return {};  // Return empty vector if snarl is not found in the dictionary
+            return {}; // Return an empty vector if snarl is not in row_headers_dict
         }
     }
 
-    std::vector<std::vector<bool>> extracted_rows(rows_to_check.size());
+    // Check columns for all 1s in the specified rows
+    std::vector<bool> columns_all_ones(num_cols, true);
 
-    for (size_t i = 0; i < rows_to_check.size(); i++) {
-        int row = rows_to_check[i];
-        
-        // Loop over the columns in the row and add each column's data to extracted_rows[i]
-        for (size_t j = row; j < row + num_cols; ++j) {
-            extracted_rows[i].push_back(matrix.get_matrix()[j]);
+    for (size_t col = 0; col < num_cols; ++col) {
+        for (size_t row : rows_to_check) {
+            if (!matrix(row, col)) {  // Use the `operator()` to access the matrix element
+                columns_all_ones[col] = false;
+                break; // Stop checking this column if any element is not 1
+            }
         }
     }
 
-    // Find columns where all values are 1 (or true if row is std::vector<bool>)
+    // Populate idx_srr_save with indices of columns where all elements are 1
     std::vector<int> idx_srr_save;
-    if (!extracted_rows.empty()) {
-        
-        // Ensure all rows have the same number of columns
-        for (const auto& row : extracted_rows) {
-            if (row.size() != num_cols) {
-                // Handle case where row sizes are inconsistent (optional)
-                // You might want to throw an error or handle it in a different way
-                throw std::runtime_error("Inconsistent row size in extracted_rows");
-            }
-        }
-
-        // Check each column
-        for (size_t col = 0; col < num_cols; ++col) {
-            bool all_ones = true;
-            
-            for (const auto& row : extracted_rows) {
-                // Compare to true (if rows are std::vector<bool>)
-                if (row[col] != true) {  // Use 'true' for boolean comparison
-                    all_ones = false;
-                    break;
-                }
-            }
-
-            if (all_ones) {
-                idx_srr_save.push_back(col);  // Store column index where all values are true (or 1)
-            }
+    for (size_t col = 0; col < num_cols; ++col) {
+        if (columns_all_ones[col]) {
+            idx_srr_save.push_back(col);
         }
     }
-    
-    // Assign to srr_save and return the result
-    srr_save = idx_srr_save;
-    return srr_save;
+
+    return idx_srr_save;
 }
+
 
 // Binary Table Generation
 void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,

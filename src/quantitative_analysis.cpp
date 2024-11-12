@@ -105,11 +105,6 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
     std::cout << "length_sample : " << length_sample << std::endl;
     std::vector<int> srr_save(length_sample); // replace list(range(length_sample)) 
 
-    // Fill idx_srr_save with indices
-    for (int i = 0; i < length_sample; ++i) {
-        srr_save[i] = i;
-    }
-
     // Initialize a zero matrix for genotypes
     std::vector<std::vector<int>> genotypes(length_sample, std::vector<int>(column_headers.size(), 0));
 
@@ -126,9 +121,13 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
         }
         std::cout << std::endl;
 
+        for (const auto& pair : row_headers_dict) {
+            std::cout << "Key: " << pair.first << ", Value: " << pair.second << std::endl;
+        }
+
         // Identify correct paths
         std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, 
-                                                                srr_save, matrix, length_sample*2);
+                                                              matrix, length_sample*2);
 
         // Print idx_srr_save output
         std::cout << "Index SRR Save:" << std::endl;

@@ -10,7 +10,7 @@
 class Matrix {
 public:
     Matrix(size_t rows, size_t cols);
-    bool operator()(size_t row, size_t col);
+    bool operator()(size_t row, size_t col) const;
     void set(size_t row, size_t col);
     const std::vector<uint8_t>& get_matrix() const;
     const std::unordered_map<std::string, size_t>& get_row_header() const;

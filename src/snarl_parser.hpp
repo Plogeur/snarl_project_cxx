@@ -60,5 +60,7 @@ std::pair<int, std::string> determine_str(const std::string& s, size_t length_s,
 const std::vector<std::vector<std::string>> decompose_snarl(const std::vector<std::string>& lst);
 
 std::vector<int> identify_correct_path(const std::vector<std::string>& decomposed_snarl, 
-                                        const std::unordered_map<std::string, size_t>& row_headers_dict, 
-                                        std::vector<int>& srr_save, const Matrix& matrix, const size_t num_cols);
+                                        const std::unordered_map<std::string, 
+                                        size_t>& row_headers_dict, 
+                                        const Matrix& matrix, 
+                                        const size_t num_cols);

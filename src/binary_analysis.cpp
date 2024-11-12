@@ -199,11 +199,8 @@ std::vector<std::vector<int>> create_binary_table(
     for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
         const std::string& path_snarl = list_path_snarl[idx_g];
         const size_t number_sample = list_samples.size();
-        std::vector<int> idx_srr_save(number_sample);
-        std::iota(idx_srr_save.begin(), idx_srr_save.end(), 0);  // Fill with [0, 1, ..., len(list_samples) - 1]
-
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
-        idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, idx_srr_save, matrix, number_sample*2);
+        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
 
         // Count occurrences in g0 and g1 based on the updated idx_srr_save
         for (int idx : idx_srr_save) {

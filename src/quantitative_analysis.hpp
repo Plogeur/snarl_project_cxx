@@ -29,7 +29,8 @@ std::tuple<double, double, double> linear_regression(
     const std::unordered_map<std::string, float>& quantitative_phenotype);
 
 std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
-    const std::vector<std::string>& column_headers, 
-    const std::vector<std::string>& list_samples, Matrix& matrix);
+    const std::vector<std::string>& column_headers,
+    const std::vector<std::string>& list_samples, 
+    Matrix& matrix);
 
 #endif
