@@ -104,6 +104,10 @@ void SnarlParser::pushMatrix(const std::string& decomposedSnarl, std::unordered_
     size_t lengthOrderedMap = rowHeaderDict.size();
     size_t idxSnarl = getOrAddIndex(rowHeaderDict, decomposedSnarl, lengthOrderedMap);
 
+    std::cout << "lengthOrderedMap pushMatrix : " << lengthOrderedMap << std::endl;
+    std::cout << "idxSnarl pushMatrix : " << idxSnarl << std::endl;
+    std::cout << "indexColumn pushMatrix : " << indexColumn << std::endl;
+
     // Check if a new matrix chunk is needed
     size_t currentRowsNumber = matrix.getRows();
     if (lengthOrderedMap > currentRowsNumber - 1) {
@@ -127,13 +131,30 @@ void SnarlParser::fill_matrix() {
         const std::vector<std::vector<int>>& genotypes = variant.genotypes;
         const std::vector<std::string>& snarl_list = variant.atInfo;
         const std::vector<std::vector<std::string>> list_list_decomposed_snarl = decompose_snarl(snarl_list);
+        
+        std::cout << "GENOTYPE : " << std::endl;  // End of each row (inner vector)
+        for (const auto& innerList : genotypes) {
+            for (const auto& str : innerList) {
+                std::cout << str << " ";  // Print each string in the inner vector
+            }
+            std::cout << std::endl;  // End of each row (inner vector)
+        }
+        std::cout << "___________" << std::endl;  // End of each row (inner vector)
 
         // Process genotypes and fill matrix
         auto start_processing = std::chrono::high_resolution_clock::now();
         for (size_t index_column = 0; index_column < genotypes.size(); ++index_column) {
+
+            std::cout << "genotypes[index_column] " << genotypes[index_column][0] << genotypes[index_column][1] << std::endl;
+            std::cout << "index_column << " << index_column << std::endl;
+
             int allele_1 = genotypes[index_column][0];
             int allele_2 = genotypes[index_column][1];
             size_t col_idx = index_column * 2;
+
+            std::cout << "allele_1 : " << allele_1 << std::endl;
+            std::cout << "allele_2 : " << allele_2 << std::endl;
+            std::cout << "col_idx : " << col_idx << std::endl;
 
             if (allele_1 == -1 || allele_2 == -1) { // Handle missing genotypes (./.)
                 continue;
@@ -145,8 +166,8 @@ void SnarlParser::fill_matrix() {
                 pushMatrix(decompose_allele_1, row_header_dict, col_idx);
             }
 
-            for (auto& decompose_allele_1 : list_list_decomposed_snarl[allele_2]) {
-                pushMatrix(decompose_allele_1, row_header_dict, col_idx);
+            for (auto& decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
+                pushMatrix(decompose_allele_2, row_header_dict, col_idx+1);
             }
 
             auto end_allele = std::chrono::high_resolution_clock::now();

@@ -96,12 +96,12 @@ std::tuple<double, double, double> linear_regression(
 // Function to create the quantitative table
 std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
     const std::vector<std::string>& column_headers, 
-    const std::vector<std::string>& list_samples, Matrix& matrix) {
+    const std::vector<std::string>& list_samples,
+    Matrix& matrix) {
 
     // Retrieve row headers dictionary
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
     int length_sample = list_samples.size();
-
     std::vector<int> srr_save(length_sample);
     
     // Fill idx_srr_save with indices
@@ -117,9 +117,7 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
         const std::string& path_snarl = column_headers[col_idx];
 
         std::cout << " before decompose_string" << std::endl;
-
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
-
         std::cout << "before identify_correct_path" << std::endl;
 
         // Identify correct paths
