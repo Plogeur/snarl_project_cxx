@@ -43,32 +43,30 @@ std::vector<std::string> SnarlParser::parseHeader() {
     return sampleNames;
 }
 
-// Function to determine and extract an integer from the string
-std::pair<size_t, size_t> determine_str(const std::string& s, size_t length_s, size_t i) {
-    size_t current_int = 0;
-    while (i < length_s && std::isdigit(s[i])) {
-        current_int = current_int * 10 + (s[i] - '0');
+// Function to extract an integer from a string starting at index `i`
+std::pair<int, std::string> determine_str(const std::string& s, int length_s, int i) {
+    int start_idx = i;
+    while (i < length_s && s[i] != '>' && s[i] != '<') {
         i++;
     }
-    return std::pair<size_t, size_t>(i, current_int);
+    return {i, s.substr(start_idx, i - start_idx)};
 }
 
 // Function to decompose a string with snarl information
 std::vector<std::string> decompose_string(const std::string& s) {
     std::vector<std::string> result;
-    size_t i = 0;
-    size_t length_s = s.size();
-    int prev_int = -1; // Placeholder for "None"
-    char prev_sym = '\0'; // Placeholder for "None"
+    int i = 0;
+    int length_s = s.length();
+    std::string prev_int, prev_sym;
 
     while (i < length_s) {
         char start_sym = s[i];
         i++;
-        const auto& [next_i, current_int] = determine_str(s, length_s, i);
-        i = next_i;
+        auto [new_i, current_int] = determine_str(s, length_s, i);
+        i = new_i;
 
-        if (prev_int != -1 && prev_sym != '\0') {
-            result.push_back(std::string(1, prev_sym) + std::to_string(prev_int) + start_sym + std::to_string(current_int));
+        if (!prev_int.empty() && !prev_sym.empty()) {
+            result.push_back(prev_sym + prev_int + start_sym + current_int);
         }
 
         prev_int = current_int;
@@ -224,7 +222,6 @@ std::vector<int> identify_correct_path(
         }
     }
 
-    std::cout << "identify_correct_path 1" << std::endl;
     std::vector<std::vector<bool>> extracted_rows(rows_to_check.size());
 
     for (size_t i = 0; i < rows_to_check.size(); i++) {
@@ -235,7 +232,6 @@ std::vector<int> identify_correct_path(
             extracted_rows[i].push_back(matrix.get_matrix()[j]);
         }
     }
-    std::cout << "identify_correct_path 2" << std::endl;
 
     // Find columns where all values are 1 (or true if row is std::vector<bool>)
     std::vector<int> idx_srr_save;
@@ -249,7 +245,6 @@ std::vector<int> identify_correct_path(
                 throw std::runtime_error("Inconsistent row size in extracted_rows");
             }
         }
-        std::cout << "identify_correct_path 3" << std::endl;
 
         // Check each column
         for (size_t col = 0; col < num_cols; ++col) {
@@ -269,8 +264,6 @@ std::vector<int> identify_correct_path(
         }
     }
     
-    std::cout << "identify_correct_path 4" << std::endl;
-
     // Assign to srr_save and return the result
     srr_save = idx_srr_save;
     return srr_save;

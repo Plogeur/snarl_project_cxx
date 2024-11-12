@@ -6,6 +6,7 @@
 #include <fstream>
 #include <unordered_set>
 #include <sstream>
+#include <cstdlib>
 #include <utility>
 #include <iostream>
 #include <chrono>
@@ -53,7 +54,7 @@ std::vector<std::string> extractATField(const std::string& infoField);
 std::vector<std::string> split(const std::string& s, char delimiter);
 
 // Function to determine and extract an integer from the string
-std::pair<size_t, size_t> determine_str(const std::string& s, size_t length_s, size_t i);
+std::pair<int, std::string> determine_str(const std::string& s, size_t length_s, size_t i);
 
 // Function to decompose a list of snarl strings
 const std::vector<std::vector<std::string>> decompose_snarl(const std::vector<std::string>& lst);

@@ -102,8 +102,9 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
     // Retrieve row headers dictionary
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
     int length_sample = list_samples.size();
-    std::vector<int> srr_save(length_sample);
-    
+    std::cout << "length_sample : " << length_sample << std::endl;
+    std::vector<int> srr_save(length_sample); // replace list(range(length_sample)) 
+
     // Fill idx_srr_save with indices
     for (int i = 0; i < length_sample; ++i) {
         srr_save[i] = i;
@@ -115,16 +116,26 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
     // Fill in the matrix
     for (size_t col_idx = 0; col_idx < column_headers.size(); ++col_idx) {
         const std::string& path_snarl = column_headers[col_idx];
-
-        std::cout << " before decompose_string" << std::endl;
+        std::cout << "path_snarl : " << path_snarl << std::endl;
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
-        std::cout << "before identify_correct_path" << std::endl;
+
+        // Print decomposed_snarl output
+        std::cout << "Decomposed Snarl:" << std::endl;
+        for (const auto& str : decomposed_snarl) {
+            std::cout << str << " ";
+        }
+        std::cout << std::endl;
 
         // Identify correct paths
         std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, 
                                                                 srr_save, matrix, length_sample*2);
 
-        std::cout << "after identify_correct_path" << std::endl;
+        // Print idx_srr_save output
+        std::cout << "Index SRR Save:" << std::endl;
+        for (int idx : idx_srr_save) {
+            std::cout << idx << " ";
+        }
+        std::cout << std::endl;
 
         for (int idx : idx_srr_save) {
             int srr_idx = idx / 2;  // Adjust index to correspond to the sample index
@@ -137,6 +148,15 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
     for (size_t i = 0; i < list_samples.size(); ++i) {
         df[list_samples[i]] = genotypes[i];
     }
-
+    
+    // Print the df map before returning
+    std::cout << "Genotype map (df):\n";
+    for (const auto& [sample, genotype_values] : df) {
+        std::cout << "Sample: " << sample << " -> Genotypes: ";
+        for (int value : genotype_values) {
+            std::cout << value << " ";
+        }
+        std::cout << std::endl;
+    }
     return df;
 }
