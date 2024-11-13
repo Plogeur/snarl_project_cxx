@@ -1,0 +1,7 @@
+src/__pycache__
+build/*
+outout/*
+.DS_Store
+.vscode
+.vscode/*
+
