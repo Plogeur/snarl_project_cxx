@@ -146,7 +146,8 @@
     "valarray": "cpp",
     "__tree": "cpp",
     "future": "cpp",
-    "queue": "cpp"
+    "queue": "cpp",
+    "codecvt": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled"
 }

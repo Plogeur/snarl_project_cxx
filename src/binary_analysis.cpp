@@ -133,6 +133,11 @@ double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
     int c = table[1][0];
     int d = table[1][1];
 
+    // std::cout << "a : " << a << std::endl;
+    // std::cout << "b : " << b << std::endl;
+    // std::cout << "c : " << c << std::endl;
+    // std::cout << "d : " << d << std::endl;
+
     // Total sum of the table
     int n = a + b + c + d;
 
@@ -142,12 +147,18 @@ double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
         throw std::runtime_error("Memory allocation failed for logFacs.");
     }
 
+    // std::cout << "n : " << n << std::endl;
+
     // Initialize log factorials
     initLogFacs(logFacs, n);
+
+    // std::cout << "logFacs : " << logFacs << std::endl;
 
     // Compute log probability cutoff
     double logpCutoff = logHypergeometricProb(logFacs, a, b, c, d);
     double pFraction = 0.0;
+
+    // std::cout << "logpCutoff : " << logpCutoff << std::endl;
 
     // Compute pFraction by iterating through possible values
     for (int x = 0; x <= n; ++x) {
@@ -156,6 +167,8 @@ double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
             if (l <= logpCutoff) pFraction += exp(l - logpCutoff);
         }
     }
+
+    // std::cout << "pFraction : " << logpCutoff << std::endl;
 
     // Clean up memory
     delete[] logFacs;
@@ -191,6 +204,7 @@ std::vector<std::vector<int>> create_binary_table(
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
     size_t length_column_headers = list_path_snarl.size();
 
+    // Print row_headers_dict and length_column_headers
     // Initialize g0 and g1 with zeros, corresponding to the length of column_headers
     std::vector<int> g0(length_column_headers, 0);
     std::vector<int> g1(length_column_headers, 0);
@@ -199,8 +213,25 @@ std::vector<std::vector<int>> create_binary_table(
     for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
         const std::string& path_snarl = list_path_snarl[idx_g];
         const size_t number_sample = list_samples.size();
+        // std::cout << "Processing path_snarl: " << path_snarl << ", number_sample: " << number_sample << std::endl;
+
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
+
+        // Print decomposed_snarl
+        // std::cout << "decomposed_snarl: ";
+        // for (const auto& part : decomposed_snarl) {
+        //     std::cout << part << " ";
+        // }
+        // std::cout << std::endl;
+
         std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
+
+        // Print idx_srr_save
+        // std::cout << "idx_srr_save: ";
+        // for (const int& idx : idx_srr_save) {
+        //     std::cout << idx << " ";
+        // }
+        // std::cout << std::endl;
 
         // Count occurrences in g0 and g1 based on the updated idx_srr_save
         for (int idx : idx_srr_save) {
@@ -221,6 +252,17 @@ std::vector<std::vector<int>> create_binary_table(
             }
         }
     }
+
+    // Print the final g0 and g1 vectors
+    // std::cout << "Final g0: ";
+    // for (const int& val : g0) {
+    //     std::cout << val << " ";
+    // }
+    // std::cout << "\nFinal g1: ";
+    // for (const int& val : g1) {
+    //     std::cout << val << " ";
+    // }
+    // std::cout << std::endl;
 
     // Return the populated binary table
     return {g0, g1};

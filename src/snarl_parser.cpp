@@ -102,10 +102,6 @@ void SnarlParser::pushMatrix(const std::string& decomposedSnarl, std::unordered_
     size_t lengthOrderedMap = rowHeaderDict.size();
     size_t idxSnarl = getOrAddIndex(rowHeaderDict, decomposedSnarl, lengthOrderedMap);
 
-    std::cout << "lengthOrderedMap pushMatrix : " << lengthOrderedMap << std::endl;
-    std::cout << "idxSnarl pushMatrix : " << idxSnarl << std::endl;
-    std::cout << "indexColumn pushMatrix : " << indexColumn << std::endl;
-
     // Check if a new matrix chunk is needed
     size_t currentRowsNumber = matrix.getRows();
     if (lengthOrderedMap > currentRowsNumber - 1) {
@@ -119,8 +115,6 @@ void SnarlParser::pushMatrix(const std::string& decomposedSnarl, std::unordered_
 // Main function that parses the VCF file and fills the matrix
 void SnarlParser::fill_matrix() {
 
-    // Track overall start time
-    auto start_total = std::chrono::high_resolution_clock::now();
     std::unordered_map<std::string, size_t> row_header_dict;
 
     for (std::string line; std::getline(file, line);) {
@@ -129,37 +123,19 @@ void SnarlParser::fill_matrix() {
         const std::vector<std::vector<int>>& genotypes = variant.genotypes;
         const std::vector<std::string>& snarl_list = variant.atInfo;
         const std::vector<std::vector<std::string>> list_list_decomposed_snarl = decompose_snarl(snarl_list);
-        
-        std::cout << "GENOTYPE : " << std::endl;  // End of each row (inner vector)
-        for (const auto& innerList : genotypes) {
-            for (const auto& str : innerList) {
-                std::cout << str << " ";  // Print each string in the inner vector
-            }
-            std::cout << std::endl;  // End of each row (inner vector)
-        }
-        std::cout << "___________" << std::endl;  // End of each row (inner vector)
 
         // Process genotypes and fill matrix
-        auto start_processing = std::chrono::high_resolution_clock::now();
         for (size_t index_column = 0; index_column < genotypes.size(); ++index_column) {
-
-            std::cout << "genotypes[index_column] " << genotypes[index_column][0] << genotypes[index_column][1] << std::endl;
-            std::cout << "index_column << " << index_column << std::endl;
 
             int allele_1 = genotypes[index_column][0];
             int allele_2 = genotypes[index_column][1];
             size_t col_idx = index_column * 2;
-
-            std::cout << "allele_1 : " << allele_1 << std::endl;
-            std::cout << "allele_2 : " << allele_2 << std::endl;
-            std::cout << "col_idx : " << col_idx << std::endl;
 
             if (allele_1 == -1 || allele_2 == -1) { // Handle missing genotypes (./.)
                 continue;
             }
 
             // Measure the time taken to push each allele into the matrix
-            auto start_allele = std::chrono::high_resolution_clock::now();
             for (auto& decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
                 pushMatrix(decompose_allele_1, row_header_dict, col_idx);
             }
@@ -167,39 +143,9 @@ void SnarlParser::fill_matrix() {
             for (auto& decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
                 pushMatrix(decompose_allele_2, row_header_dict, col_idx+1);
             }
-
-            auto end_allele = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double> elapsed_allele = end_allele - start_allele;
-            std::cout << "Allele processing time for column " << index_column << ": " << elapsed_allele.count() << " seconds\n";
         }
-
-        auto end_processing = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed_processing = end_processing - start_processing;
-        std::cout << "Genotype processing time: " << elapsed_processing.count() << " seconds\n";
-
-        // Time setting row headers
-        auto start_row_header = std::chrono::high_resolution_clock::now();
         matrix.set_row_header(row_header_dict);
-        auto end_row_header = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed_row_header = end_row_header - start_row_header;
-        std::cout << "Row header setting time: " << elapsed_row_header.count() << " seconds\n";
-        std::cout << "---------------------------------------------------------------------------" << std::endl;
-        std::cout << "" << std::endl;
     }
-
-    // Track overall end time
-    auto end_total = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_total = end_total - start_total;
-    std::cout << "Total fill_matrix execution time: " << elapsed_total.count() << " seconds\n";
-
-    std::cout << "Matrix : " << std::endl;
-    for (size_t i = 0; i < 5; ++i) {
-        for (size_t j = 0; j < 8; ++j) {
-            std::cout << matrix(i, j) << " ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
 }
 
 std::vector<int> identify_correct_path(
@@ -209,9 +155,7 @@ std::vector<int> identify_correct_path(
     const size_t num_cols
 ) {
     std::vector<int> rows_to_check;
-    std::cout << "num_cols : " << num_cols << std::endl;
 
-    // Populate rows_to_check based on decomposed_snarl and row_headers_dict
     for (const auto& snarl : decomposed_snarl) {
         if (snarl.find("*") != std::string::npos) {
             continue; // Skip snarls containing "*"
@@ -243,7 +187,6 @@ std::vector<int> identify_correct_path(
             idx_srr_save.push_back(col);
         }
     }
-
     return idx_srr_save;
 }
 
@@ -254,10 +197,6 @@ void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector
                                   const std::string& output) 
 {
     std::ofstream outf(output, std::ios::binary);
-    if (!outf.is_open()) {
-        std::cerr << "Error opening output file!" << std::endl;
-        return;
-    }
 
     // Write headers
     std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_Fisher\tP_Chi2\tGROUP_1_PATH_1\tGROUP_1_PATH_2\tGROUP_2_PATH_1\tGROUP_2_PATH_2\n";
@@ -266,7 +205,7 @@ void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
         std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
-        auto stats = binary_stat_test(df);
+        std::vector<std::string> stats = binary_stat_test(df);
 
         std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
         // Assuming stats is a vector containing the values in the order: fisher_p_value, chi2_p_value, GIPI, GIPII, GIIPI, GIIPII
@@ -285,10 +224,6 @@ void SnarlParser::quantitative_table(const std::unordered_map<std::string, std::
                                         const std::string& output) 
 {
     std::ofstream outf(output, std::ios::binary);
-    if (!outf.is_open()) {
-        std::cerr << "Error opening output file!" << std::endl;
-        return;
-    }
     
     // Write headers
     std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tSE\tBETA\tP\n";
@@ -296,15 +231,11 @@ void SnarlParser::quantitative_table(const std::unordered_map<std::string, std::
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
-        std::cout << "machin" << std::endl;
 
         std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(list_snarl, sampleNames, matrix);
-        std::cout << "chose" << std::endl;
 
         // std::make_tuple(se, beta, p_value)
         std::tuple<double, double, double> tuple_info = linear_regression(df, quantitative_phenotype);
-
-        std::cout << "bidule" << std::endl;
 
         std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
         std::stringstream data;
@@ -322,6 +253,7 @@ Variant::Variant(std::string& line, std::vector<std::string> sampleNames) {
     std::string columnData;
     std::string infoField;
     std::string genotypeStr;
+
     // Skip the first 9 columns (CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT)
     for (int i = 0; i < 9; ++i) {
         variantStream >> columnData;
@@ -329,6 +261,7 @@ Variant::Variant(std::string& line, std::vector<std::string> sampleNames) {
             infoField = columnData; // Capture the INFO column for parsing
         }
     }
+
     // Read the genotype data for each sample
     for (const auto& sample : sampleNames) {
         if (!(variantStream >> genotypeStr)) {
@@ -345,8 +278,8 @@ std::vector<int> extractGenotype(const std::string& genotypeStr) {
     std::vector<int> alleles;
     std::vector<std::string> alleleStrs = split(genotypeStr, '/');
 
-    for (const auto& alleleStr : alleleStrs) {
-        if (alleleStr == ".") {
+    for (const std::string& alleleStr : alleleStrs) {
+        if (alleleStr[0] == '.') {
             alleles.push_back(-1); // Use -1 for missing data
         } else {
             alleles.push_back(std::stoi(alleleStr)); // Convert allele string to integer

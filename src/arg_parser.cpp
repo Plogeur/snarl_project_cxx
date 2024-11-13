@@ -93,15 +93,6 @@ std::unordered_map<std::string, std::vector<std::string>> parse_snarl_path_file(
         }
     }
     file.close();
-    // Print the snarl_paths before returning
-    std::cout << "Parsed snarl paths:\n";
-    for (const auto& [snarl, paths] : snarl_paths) {
-        std::cout << "Snarl: " << snarl << " -> Paths: ";
-        for (const auto& path : paths) {
-            std::cout << path << " ";
-        }
-        std::cout << std::endl;
-    }
     
     return snarl_paths;
 }
