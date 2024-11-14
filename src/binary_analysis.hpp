@@ -9,36 +9,38 @@
 #include <algorithm>
 #include <unordered_map>
 #include <map>
+#include <iomanip>
+#include <sstream>
 #include "matrix.hpp"
 #include "snarl_parser.hpp"
 
 // ------------------------ Chi2 exact test ------------------------
 
 // Function to calculate the Chi-square test statistic
-static double chiSquareStatistic(const std::vector<std::vector<int>>& observed);
+double chiSquareStatistic(const std::vector<std::vector<int>>& observed);
 
 // Function to calculate the degrees of freedom for a 2D table
-static int calculateDegreesOfFreedom(int rows, int cols);
+int calculateDegreesOfFreedom(int rows, int cols);
 
 // Function to compute the regularized incomplete gamma function (for Chi-square CDF approximation)
-static double gammaIncomplete(double s, double x);
+double gammaIncomplete(double s, double x);
 
 // Function to calculate the p-value from Chi-square statistic using incomplete gamma function
-static double chiSquarePValue(double chiSquare, int degreesOfFreedom);
+double chiSquarePValue(double chiSquare, int degreesOfFreedom);
 
 // Function to perform the Chi-square test
-static std::string chi2Test(const std::vector<std::vector<int>>& observed);
+std::string chi2Test(const std::vector<std::vector<int>>& observed);
 
 // ------------------------ Fisher exact test ------------------------
 
 // Function to initialize the log factorials array
-void initLogFacs(double* logFacs, int n);
+void initLogFacs(long double* logFacs, int n);
 
 // Function to calculate the log probability of the hypergeometric distribution
-double logHypergeometricProb(double* logFacs, int a, int b, int c, int d);
+long double logHypergeometricProb(long double* logFacs , int a, int b, int c, int d);
 
 // Function to perform Fisher's exact test
-double fastFishersExactTest(const std::vector<std::vector<int>>& table);
+long double fastFishersExactTest(const std::vector<std::vector<int>>& table);
 
 // ------------------------ Binary table & stats ------------------------
 

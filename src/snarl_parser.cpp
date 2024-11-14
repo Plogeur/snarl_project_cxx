@@ -204,11 +204,13 @@ void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
+
         std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
         std::vector<std::string> stats = binary_stat_test(df);
 
         std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
-        // Assuming stats is a vector containing the values in the order: fisher_p_value, chi2_p_value, GIPI, GIPII, GIIPI, GIIPII
+        // Stats is a vector containing the values in the order: 
+        // fisher_p_value, chi2_p_value, GIPI, GIPII, GIIPI, GIIPII
         std::stringstream data;
         data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var << "\t" << ref << "\t" << alt
              << "\t" << stats[0] << "\t" << stats[1] << "\t" << stats[2] << "\t" << stats[3]

@@ -69,7 +69,6 @@ int main(int argc, char* argv[]) {
     start_1 = std::chrono::high_resolution_clock::now();
     auto snarl = parse_snarl_path_file(snarl_path);
 
-
     // Process binary group file if provided
     if (!binary_path.empty()) {
         auto binary_group = parse_group_file(binary_path);
@@ -96,7 +95,7 @@ int main(int argc, char* argv[]) {
     end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Time P-value: " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 // ./snarl_project --vcf_path ../test/small_vcf.vcf --snarl ../test/list_snarl_short.txt -b ../test/group.txt -o snarl_project
