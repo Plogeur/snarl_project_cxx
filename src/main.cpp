@@ -46,17 +46,29 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    try {
-        // Check format of the VCF file
-        check_format_vcf_file(vcf_path);
+    // Check format of the VCF file
+    check_format_vcf_file(vcf_path);
 
-        // Check format of the group/snarl file
-        check_format_group_snarl(snarl_path);
+    // Check format of the snarl paths file
+    check_format_paths_snarl(snarl_path);
 
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
-        return 1;
+    std::vector<std::string> list_samples = parseHeader(vcf_path);    
+    std::unordered_map<std::string, bool> binary;
+    std::unordered_map<std::string, float> quantitative;
+    if (!binary_path.empty()) {
+        check_format_binary_phenotype(binary_path);
+        binary = parse_binary_pheno(binary_path);
+        check_match_samples(binary, list_samples);
     }
+
+    if (!quantitative_path.empty()) {
+        check_format_quantitative_phenotype(quantitative_path);
+        quantitative = parse_quantitative_pheno(quantitative_path);
+        check_match_samples(quantitative, list_samples);
+    }
+
+    // Parse the snarl file
+    auto snarl = parse_snarl_path(snarl_path);
 
     // Initialize the SnarlProcessor with the VCF path
     SnarlParser vcf_object(vcf_path);
@@ -65,26 +77,17 @@ int main(int argc, char* argv[]) {
     auto end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Time Matrix: " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
 
-    // Parse the snarl file
-    start_1 = std::chrono::high_resolution_clock::now();
-    auto snarl = parse_snarl_path_file(snarl_path);
-
     // Process binary group file if provided
     if (!binary_path.empty()) {
-        auto binary_group = parse_group_file(binary_path);
-
         if (!output_path.empty()) {
-            vcf_object.binary_table(snarl, binary_group, output_path);
+            vcf_object.binary_table(snarl, binary, output_path);
         } else {
-            vcf_object.binary_table(snarl, binary_group);
+            vcf_object.binary_table(snarl, binary);
         }
     }
 
     // Process quantitative phenotype file if provided
     if (!quantitative_path.empty()) {
-
-        auto quantitative = parse_pheno_file(quantitative_path);
-
         if (!output_path.empty()) {
             vcf_object.quantitative_table(snarl, quantitative, output_path);
         } else {
