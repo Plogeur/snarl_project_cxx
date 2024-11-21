@@ -1,7 +1,7 @@
 #include "binary_analysis.hpp"
 #include "snarl_parser.hpp"
 
-// ------------------------ Chi2 exact test ------------------------
+// ------------------------ Chi2 test ------------------------
 
 // Function to calculate the Chi-square test statistic
 double chiSquareStatistic(const std::vector<std::vector<int>>& observed) {
