@@ -1,112 +1,80 @@
 #include "binary_analysis.hpp"
 #include "snarl_parser.hpp"
 
-// ------------------------ Chi2 exact test ------------------------
+// ------------------------ Chi2 test ------------------------
+
+// Check if the observed matrix is valid (no zero rows/columns)
+bool check_observed(const std::vector<std::vector<int>>& observed, size_t rows, size_t cols) {
+    std::vector<int> col_sums(cols, 0);
+
+    for (size_t i = 0; i < rows; ++i) {
+        int row_sum = 0;
+        for (size_t j = 0; j < cols; ++j) {
+            row_sum += observed[i][j];
+            col_sums[j] += observed[i][j];
+        }
+        if (row_sum <= 0) return false; // Check row sum
+    }
+
+    for (size_t j = 0; j < cols; ++j) {
+        if (col_sums[j] <= 0) return false; // Check column sums
+    }
+
+    return true;
+}
 
 // Function to calculate the Chi-square test statistic
-double chiSquareStatistic(const std::vector<std::vector<int>>& observed) {
-    int rows = observed.size();
-    int cols = observed[0].size();
-
-    if (rows < 2 || cols < 2) {
-        throw std::invalid_argument("Input table must have at least 2 rows and 2 columns.");
-    }
-
-    // Calculate row and column sums
-    std::vector<int> rowSums(rows, 0);
-    std::vector<int> colSums(cols, 0);
-    int totalSum = 0;
-
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            rowSums[i] += observed[i][j];
-            colSums[j] += observed[i][j];
-            totalSum += observed[i][j];
-        }
-    }
-
-    // Compute expected frequencies and Chi-square statistic
-    double chiSquare = 0.0;
-
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            double expected = (double(rowSums[i]) * colSums[j]) / totalSum;
-            chiSquare += std::pow(observed[i][j] - expected, 2) / expected;
-        }
-    }
-
-    return chiSquare;
-}
-
-// Function to calculate the degrees of freedom for a 2D table
-int calculateDegreesOfFreedom(int rows, int cols) {
-    return (rows - 1) * (cols - 1);
-}
-
-// Function to compute the regularized incomplete gamma function (for Chi-square CDF approximation)
-double gammaIncomplete(double s, double x) {
-    const double epsilon = 1e-10;
-    double sum = 1.0 / s;
-    double term = sum;
-    int n = 1;
-
-    while (term > epsilon) {
-        term *= x / (s + n);
-        sum += term;
-        ++n;
-    }
-
-    return sum * exp(-x + s * log(x) - std::lgamma(s));
-}
-
-// Function to calculate the p-value from Chi-square statistic using incomplete gamma function
-double chiSquarePValue(double chiSquare, int degreesOfFreedom) {
-    // The p-value is the tail probability of the Chi-square distribution
-    return 1.0 - gammaIncomplete(degreesOfFreedom / 2.0, chiSquare / 2.0);
-}
-
-// Function to perform the Chi-square test
 std::string chi2Test(const std::vector<std::vector<int>>& observed) {
-    // Ensure the table has at least 2 rows and 2 columns and all cells have non-zero counts
-    int rows = observed.size();
-    int cols = observed[0].size();
+    size_t rows = observed.size();
+    size_t cols = observed[0].size();
 
-    if (rows >= 2 && cols >= 2) {
-        // Check that all rows and columns sum to non-zero values
-        bool valid = true;
-        for (int i = 0; i < rows && valid; ++i) {
-            valid &= std::accumulate(observed[i].begin(), observed[i].end(), 0) > 0;
-        }
-        for (int j = 0; j < cols && valid; ++j) {
-            int colSum = 0;
-            for (int i = 0; i < rows; ++i) {
-                colSum += observed[i][j];
-            }
-            valid &= colSum > 0;
-        }
-
-        if (valid) {
-            try {
-                double chiSquare = chiSquareStatistic(observed);
-                int degreesOfFreedom = calculateDegreesOfFreedom(rows, cols);
-
-                // Calculate p-value without Boost (using the incomplete gamma function)
-                double pValue = chiSquarePValue(chiSquare, degreesOfFreedom);
-
-                std::stringstream ss;
-                ss << std::scientific << std::setprecision(6) << pValue;
-                std::string stringPValue = ss.str();
-                return stringPValue;
-
-            } catch (const std::exception& e) {
-                return "Error: " + std::string(e.what());
-            }
-        } else {
-            return "N/A";  // Invalid table data
-        }
-    } else {
-        return "N/A";  // Invalid table dimensions
+    // Validate the observed matrix
+    if (!check_observed(observed, rows, cols)) {
+        return "NA";
     }
+
+    // Compute row and column sums
+    std::vector<double> row_sums(rows, 0.0);
+    std::vector<double> col_sums(cols, 0.0);
+    double total_sum = 0.0;
+
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            row_sums[i] += observed[i][j];
+            col_sums[j] += observed[i][j];
+            total_sum += observed[i][j];
+        }
+    }
+
+    // Compute expected frequencies
+    std::vector<std::vector<double>> expected(rows, std::vector<double>(cols, 0.0));
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            expected[i][j] = (row_sums[i] * col_sums[j]) / total_sum;
+        }
+    }
+
+    // Compute chi-squared statistic
+    double chi_squared_stat = 0.0;
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            if (expected[i][j] > 0) { // Avoid division by zero
+                double diff = observed[i][j] - expected[i][j];
+                chi_squared_stat += diff * diff / expected[i][j];
+            }
+        }
+    }
+
+    size_t degrees_of_freedom = (rows - 1) * (cols - 1);
+
+    // Compute p-value using Boost's chi-squared distribution
+    boost::math::chi_squared chi_squared_dist(degrees_of_freedom);
+    double p_value = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
+
+    // Format p-value as a string
+    std::ostringstream ss;
+    ss << std::scientific << std::setprecision(4) << p_value;
+    return ss.str();
 }
 
 // ------------------------ Fisher exact test ------------------------
@@ -169,8 +137,9 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     int group_II_path_I = df[1][0];
     int group_II_path_II = df[1][1];
 
+    // Pvalue Precision of 6 number after 0.
     std::stringstream ss;
-    ss << std::scientific << std::setprecision(6) << fastfisher_p_value;
+    ss << std::scientific << std::setprecision(4) << fastfisher_p_value;
     std::string stringFastfisher_p_value = ss.str();
 
     std::vector<std::string> result = {

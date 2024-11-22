@@ -11,22 +11,15 @@
 #include <map>
 #include <iomanip>
 #include <sstream>
+#include <boost/math/distributions/chi_squared.hpp>
+
 #include "matrix.hpp"
 #include "snarl_parser.hpp"
 
-// ------------------------ Chi2 exact test ------------------------
+// ------------------------ Chi2 test ------------------------
 
-// Function to calculate the Chi-square test statistic
-double chiSquareStatistic(const std::vector<std::vector<int>>& observed);
-
-// Function to calculate the degrees of freedom for a 2D table
-int calculateDegreesOfFreedom(int rows, int cols);
-
-// Function to compute the regularized incomplete gamma function (for Chi-square CDF approximation)
-double gammaIncomplete(double s, double x);
-
-// Function to calculate the p-value from Chi-square statistic using incomplete gamma function
-double chiSquarePValue(double chiSquare, int degreesOfFreedom);
+// Function to check if matrix is valid (no zero rows/columns)
+bool check_observed(const std::vector<std::vector<int>>& observed, size_t rows, size_t cols);
 
 // Function to perform the Chi-square test
 std::string chi2Test(const std::vector<std::vector<int>>& observed);
@@ -42,7 +35,7 @@ long double logHypergeometricProb(long double* logFacs , int a, int b, int c, in
 // Function to perform Fisher's exact test
 long double fastFishersExactTest(const std::vector<std::vector<int>>& table);
 
-// ------------------------ Binary table & stats ------------------------
+// ------------------------ Binary table ------------------------
 
 std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df);
 
@@ -51,4 +44,4 @@ std::vector<std::vector<int>> create_binary_table(
     const std::vector<std::string>& list_path_snarl, 
     const std::vector<std::string>& list_samples, Matrix& matrix);
 
-#endif // CHI2FISHERTEST_HPP
+#endif

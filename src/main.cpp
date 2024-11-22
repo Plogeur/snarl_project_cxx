@@ -19,7 +19,7 @@ void print_help() {
 
 int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
-    std::string vcf_path, snarl_path, binary_path, quantitative_path, output_path;
+    std::string vcf_path, snarl_path, binary_path, quantitative_path, output_name;
     bool show_help = false;
 
     // Parse arguments manually
@@ -34,14 +34,18 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
             quantitative_path = argv[++i];
         } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
-            output_path = argv[++i];
+            output_name = argv[++i];
         } else if (arg == "-h" || arg == "--help") {
             show_help = true;
         }
     }
 
-    // Display help if requested or if required arguments are missing
-    if (show_help || vcf_path.empty() || snarl_path.empty()) {
+    std::filesystem::path output_dir = "output";
+    std::filesystem::create_directory(output_dir);
+    output_name = (output_dir / output_name).string();
+
+    if (show_help || vcf_path.empty() || snarl_path.empty() || 
+        binary_path.empty() == quantitative_path.empty()) {
         print_help();
         return 0;
     }
@@ -73,8 +77,8 @@ int main(int argc, char* argv[]) {
     if (!binary_path.empty()) {
         auto binary_group = parse_group_file(binary_path);
 
-        if (!output_path.empty()) {
-            vcf_object.binary_table(snarl, binary_group, output_path);
+        if (!output_name.empty()) {
+            vcf_object.binary_table(snarl, binary_group, output_name);
         } else {
             vcf_object.binary_table(snarl, binary_group);
         }
@@ -85,8 +89,8 @@ int main(int argc, char* argv[]) {
 
         auto quantitative = parse_pheno_file(quantitative_path);
 
-        if (!output_path.empty()) {
-            vcf_object.quantitative_table(snarl, quantitative, output_path);
+        if (!output_name.empty()) {
+            vcf_object.quantitative_table(snarl, quantitative, output_name);
         } else {
             vcf_object.quantitative_table(snarl, quantitative);
         }
