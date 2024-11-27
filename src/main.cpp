@@ -42,6 +42,7 @@ int main(int argc, char* argv[]) {
 
     std::filesystem::path output_dir = "output";
     std::filesystem::create_directory(output_dir);
+    if (prefix_name.empty()) {prefix_name = "genotype";}
     const std::string output_name = (output_dir / prefix_name).string();
 
     if (show_help || vcf_path.empty() || snarl_path.empty()) {
@@ -88,7 +89,7 @@ int main(int argc, char* argv[]) {
     auto start_1 = std::chrono::high_resolution_clock::now();
     vcf_object.fill_matrix();
     auto end_1 = std::chrono::high_resolution_clock::now();
-    std::cout << "Time Matrix: " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
+    std::cout << "Time matrix: " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
 
     // create the bim/bed plink format
     const std::string output_bim = output_name + ".bim";
@@ -97,9 +98,9 @@ int main(int argc, char* argv[]) {
     vcf_object.create_bim_bed(snarl, output_bim, output_bed);
 
     end_1 = std::chrono::high_resolution_clock::now();
-    std::cout << "Time P-value: " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
+    std::cout << "Time plink files creations : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
 
     return EXIT_SUCCESS;
 }
 
-// ./snarl_project --vcf_path ../test/small_vcf.vcf --snarl ../test/list_snarl_short.txt -b ../test/group.txt -o snarl_project
+// ./snarl_project --vcf_path ../test/small_vcf.vcf --snarl ../test/list_snarl_short.txt --pheno ../test/pheno.txt -o genotype

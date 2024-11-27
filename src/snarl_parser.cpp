@@ -10,6 +10,8 @@ void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vect
     std::ofstream outbim(output_bim);
     std::ofstream outbed(output_bed, std::ios::binary);  // Open BED file as binary
     
+    const size_t allele_number = sampleNames.size()*2;
+
     if (!outbim.is_open() || !outbed.is_open()) {
         std::cerr << "Error opening output files!" << std::endl;
         return;
@@ -17,11 +19,13 @@ void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vect
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
+
         // Generate a genotype table for this snarl
-        std::vector<std::vector<int>> table = create_table(list_snarl, sampleNames, matrix);
-        
+        std::vector<std::vector<int>> table = create_table(list_snarl);
+
         // Process each snarl to write the corresponding BIM and BED entries
         for (size_t snp_idx = 0; snp_idx < list_snarl.size(); ++snp_idx) {
+
             std::string snp_id = list_snarl[snp_idx];
             int chromosome = 1;
             int position = 1 + snp_idx;
@@ -33,36 +37,31 @@ void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vect
                    << "\t" << allele1 << "\t" << allele2 << "\n";
             
             // Write the corresponding genotypes to the BED file
-            for (size_t sample_idx = 0; sample_idx < sampleNames.size(); ++sample_idx) {
-                int genotype = table[sample_idx][snp_idx];  // Get genotype (0, 1, or 2)
+            for (size_t snarl_list_idx = 0; snarl_list_idx < allele_number; ++snarl_list_idx) {
+                int genotype = table[snp_idx][snarl_list_idx];  // Get genotype (0, 1, or 2)
                 unsigned char encoded_genotype = static_cast<unsigned char>(genotype);
                 outbed.write(reinterpret_cast<char*>(&encoded_genotype), sizeof(unsigned char));
             }
         }
     }
-
     outbim.close();
     outbed.close();
 }
 
-std::vector<std::vector<int>> create_table(
-    const std::vector<std::string>& list_path_snarl, 
-    const std::vector<std::string>& list_samples, 
-    Matrix& matrix) 
+std::vector<std::vector<int>> SnarlParser::create_table(
+    const std::vector<std::string>& list_path_snarl)
 {
     std::vector<std::vector<int>> small_grm;
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
-    size_t length_column_headers = list_path_snarl.size();
 
     // Iterate over each path_snarl in column_headers
     for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
         const std::string& path_snarl = list_path_snarl[idx_g];
-        const size_t number_sample = list_samples.size();
+        const size_t number_sample = sampleNames.size();
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
-        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
-        small_grm.push_back(idx_srr_save);
+        std::vector<int> alleles = identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
+        small_grm.push_back(alleles);
     }
-
     return small_grm;
 }
 
@@ -223,7 +222,7 @@ std::vector<int> identify_correct_path(
         if (it != row_headers_dict.end()) {
             rows_to_check.push_back(it->second);
         } else {
-            return {}; // Return an empty vector if snarl is not in row_headers_dict
+            return std::vector<int>(num_cols, 0);
         }
     }
 
@@ -239,14 +238,16 @@ std::vector<int> identify_correct_path(
         }
     }
 
-    // Populate idx_srr_save with indices of columns where all elements are 1
-    std::vector<int> idx_srr_save;
+    // Populate allele_vector with indices of columns where all elements are 1
+    std::vector<int> allele_vector;
     for (size_t col = 0; col < num_cols; ++col) {
         if (columns_all_ones[col]) {
-            idx_srr_save.push_back(col);
+            allele_vector.push_back(1);
+        } else {
+            allele_vector.push_back(0);
         }
     }
-    return idx_srr_save;
+    return allele_vector;
 }
 
 // Parses a variant line from the VCF file and extracts genotype and AT field
@@ -319,7 +320,7 @@ std::vector<std::string> split(const std::string& s, char delimiter) {
 
 void create_fam(const std::unordered_map<std::string, int>& sex, 
                 const std::unordered_map<std::string, int>& pheno, 
-                const std::string& output_path = "output.fam")
+                const std::string& output_path)
 
 {
     std::ofstream outfile(output_path);

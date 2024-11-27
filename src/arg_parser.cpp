@@ -23,11 +23,8 @@ void parse_pheno(const std::string &pheno_path, std::unordered_map<std::string, 
             continue;
         }
 
-        // Create a unique key using FID and IID (if needed)
-        std::string key = fid + "_" + iid;
-
         // Insert into the map
-        pheno[key] = phenotype;
+        pheno[iid] = phenotype;
     }
 
     file.close();
@@ -164,9 +161,9 @@ void check_format_phenotype(const std::string& file_path) {
     }
     header.push_back(first_line.substr(start));
 
-    std::vector<std::string> expected_header = {"SAMPLE", "GROUP"};
+    std::vector<std::string> expected_header = {"FID", "IID", "PHENO"};
     if (header != expected_header) {
-        throw std::invalid_argument("The file must contain the following headers: SAMPLE, GROUP and be split by tabulation.");
+        throw std::invalid_argument("The file must contain the following headers: FID IID PHENO and be split by tabulation.");
     }
 }
 
