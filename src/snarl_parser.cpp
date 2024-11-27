@@ -7,6 +7,19 @@ SnarlParser::SnarlParser(const std::string& vcf_path) : filename(vcf_path), file
     sampleNames = parseHeader();
 }
 
+void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
+                        const std::string& output) 
+{
+    std::ofstream outf(output);
+
+    // Iterate over each snarl
+    for (const auto& [snarl, list_snarl] : snarls) {
+        std::vector<std::vector<int>> df = create_table(binary_groups, list_snarl, sampleNames, matrix);
+        // write thous line into the bim file
+
+    }
+}
+
 std::vector<std::string> SnarlParser::parseHeader() {
     file.clear();                     // Clear any flags in the file stream
     file.seekg(0, std::ios::beg);     // Move the file stream to the beginning
@@ -190,61 +203,16 @@ std::vector<int> identify_correct_path(
     return idx_srr_save;
 }
 
-
-// Binary Table Generation
-void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
-                                  const std::unordered_map<std::string, bool>& binary_groups,
+void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
                                   const std::string& output) 
 {
-    std::ofstream outf(output, std::ios::binary);
-
-    // Write headers
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_Fisher\tP_Chi2\tGROUP_1_PATH_1\tGROUP_1_PATH_2\tGROUP_2_PATH_1\tGROUP_2_PATH_2\n";
-    outf.write(headers.c_str(), headers.size());
+    std::ofstream outf(output); // change
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
 
-        std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
-        std::vector<std::string> stats = binary_stat_test(df);
-
-        std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
-        // Stats is a vector containing the values in the order: 
-        // fisher_p_value, chi2_p_value, GIPI, GIPII, GIIPI, GIIPII
-        std::stringstream data;
-        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var << "\t" << ref << "\t" << alt
-             << "\t" << stats[0] << "\t" << stats[1] << "\t" << stats[2] << "\t" << stats[3]
-             << "\t" << stats[4] << "\t" << stats[5] << "\n";
+        std::vector<std::vector<int>> df = create_grm_table(list_snarl, sampleNames, matrix);
         
-        outf.write(data.str().c_str(), data.str().size());
-    }
-}
-
-// Quantitative Table Generation
-void SnarlParser::quantitative_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
-                                        const std::unordered_map<std::string, float>& quantitative_phenotype,
-                                        const std::string& output) 
-{
-    std::ofstream outf(output, std::ios::binary);
-    
-    // Write headers
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tSE\tBETA\tP\n";
-    outf.write(headers.c_str(), headers.size());
-
-    // Iterate over each snarl
-    for (const auto& [snarl, list_snarl] : snarls) {
-
-        std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(list_snarl, sampleNames, matrix);
-
-        // std::make_tuple(se, beta, p_value)
-        std::tuple<double, double, double> tuple_info = linear_regression(df, quantitative_phenotype);
-
-        std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
-        std::stringstream data;
-        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var << "\t" << ref << "\t" << alt
-            << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
-            << "\t" << std::get<2>(tuple_info) << "\n";
-
         outf.write(data.str().c_str(), data.str().size());
     }
 }
@@ -316,3 +284,26 @@ std::vector<std::string> split(const std::string& s, char delimiter) {
     }
     return tokens;
 }
+
+void create_fam(const std::unordered_map<std::string, int>& sex, 
+                const std::unordered_map<std::string, int>& pheno, 
+                const std::string& output_path = "output.fam") {
+    std::ofstream outfile(output_path);
+    if (!outfile.is_open()) {
+        throw std::runtime_error("Unable to open output file: " + output_path);
+    }
+
+    for (const auto& [sample, sex_code] : sex) {
+        int phenotype = pheno.at(sample); // Assume pheno contains all samples.
+
+        outfile << sample << " "       // FID (default to sample ID)
+                << sample << " "       // IID (sample ID)
+                << "0 0 "              // PID and MID (unknown)
+                << sex_code << " "     // SEX (0 = unknown, 1 = male, 2 = female)
+                << phenotype << "\n";  // PHENOTYPE (-9 = missing)
+    }
+
+    outfile.close();
+}
+
+
