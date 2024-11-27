@@ -1,23 +1,69 @@
 #include "snarl_parser.hpp"
 #include "matrix.hpp"
-#include "binary_analysis.hpp"
-#include "quantitative_analysis.hpp"
 
 SnarlParser::SnarlParser(const std::string& vcf_path) : filename(vcf_path), file(vcf_path), matrix(1000000, parseHeader().size() * 2) {
     sampleNames = parseHeader();
 }
 
 void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
-                        const std::string& output) 
-{
-    std::ofstream outf(output);
+                                  const std::string& output_bim, const std::string& output_bed) {
+    std::ofstream outbim(output_bim);
+    std::ofstream outbed(output_bed, std::ios::binary);  // Open BED file as binary
+    
+    if (!outbim.is_open() || !outbed.is_open()) {
+        std::cerr << "Error opening output files!" << std::endl;
+        return;
+    }
 
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
-        std::vector<std::vector<int>> df = create_table(binary_groups, list_snarl, sampleNames, matrix);
-        // write thous line into the bim file
+        // Generate a genotype table for this snarl
+        std::vector<std::vector<int>> table = create_table(list_snarl, sampleNames, matrix);
+        
+        // Process each snarl to write the corresponding BIM and BED entries
+        for (size_t snp_idx = 0; snp_idx < list_snarl.size(); ++snp_idx) {
+            std::string snp_id = list_snarl[snp_idx];
+            int chromosome = 1;
+            int position = 1 + snp_idx;
+            std::string allele1 = "A";
+            std::string allele2 = "T";
 
+            // Write the BIM file line for the SNP
+            outbim << chromosome << "\t" << snp_id << "\t0\t" << position
+                   << "\t" << allele1 << "\t" << allele2 << "\n";
+            
+            // Write the corresponding genotypes to the BED file
+            for (size_t sample_idx = 0; sample_idx < sampleNames.size(); ++sample_idx) {
+                int genotype = table[sample_idx][snp_idx];  // Get genotype (0, 1, or 2)
+                unsigned char encoded_genotype = static_cast<unsigned char>(genotype);
+                outbed.write(reinterpret_cast<char*>(&encoded_genotype), sizeof(unsigned char));
+            }
+        }
     }
+
+    outbim.close();
+    outbed.close();
+}
+
+std::vector<std::vector<int>> create_table(
+    const std::vector<std::string>& list_path_snarl, 
+    const std::vector<std::string>& list_samples, 
+    Matrix& matrix) 
+{
+    std::vector<std::vector<int>> small_grm;
+    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
+    size_t length_column_headers = list_path_snarl.size();
+
+    // Iterate over each path_snarl in column_headers
+    for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
+        const std::string& path_snarl = list_path_snarl[idx_g];
+        const size_t number_sample = list_samples.size();
+        std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
+        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
+        small_grm.push_back(idx_srr_save);
+    }
+
+    return small_grm;
 }
 
 std::vector<std::string> SnarlParser::parseHeader() {
@@ -203,20 +249,6 @@ std::vector<int> identify_correct_path(
     return idx_srr_save;
 }
 
-void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
-                                  const std::string& output) 
-{
-    std::ofstream outf(output); // change
-
-    // Iterate over each snarl
-    for (const auto& [snarl, list_snarl] : snarls) {
-
-        std::vector<std::vector<int>> df = create_grm_table(list_snarl, sampleNames, matrix);
-        
-        outf.write(data.str().c_str(), data.str().size());
-    }
-}
-
 // Parses a variant line from the VCF file and extracts genotype and AT field
 Variant::Variant(std::string& line, std::vector<std::string> sampleNames) {
     std::istringstream variantStream(line);
@@ -287,7 +319,9 @@ std::vector<std::string> split(const std::string& s, char delimiter) {
 
 void create_fam(const std::unordered_map<std::string, int>& sex, 
                 const std::unordered_map<std::string, int>& pheno, 
-                const std::string& output_path = "output.fam") {
+                const std::string& output_path = "output.fam")
+
+{
     std::ofstream outfile(output_path);
     if (!outfile.is_open()) {
         throw std::runtime_error("Unable to open output file: " + output_path);

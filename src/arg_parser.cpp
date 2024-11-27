@@ -2,35 +2,35 @@
 
 namespace fs = std::filesystem;
 
-// Function to parse the binary phenotype file
-std::unordered_map<std::string, bool> parse_pheno(const std::string& group_file) {
-    std::unordered_map<std::string, bool> group;
+// Function to parse phenotype file
+void parse_pheno(const std::string &pheno_path, std::unordered_map<std::string, int> &pheno) {
+    std::ifstream file(pheno_path);
 
-    std::ifstream file(group_file);
     if (!file.is_open()) {
-        std::cerr << "Error: Could not open file " << group_file << std::endl;
+        std::cerr << "Error: Could not open file " << pheno_path << std::endl;
+        return;
     }
 
     std::string line;
-    std::getline(file, line);  // Skip header line
-
     while (std::getline(file, line)) {
         std::istringstream iss(line);
-        std::string sample;
-        int group_line;
+        std::string fid, iid;
+        int phenotype;
 
-        std::getline(iss, sample, '\t');
-        iss >> group_line;
-
-        if (group_line == 0) {
-            group[sample] = 0;
-        } else if (group_line == 1) {
-            group[sample] = 1;
+        // Assuming the phenotype file format: FID IID Pheno (space or tab-separated)
+        if (!(iss >> fid >> iid >> phenotype)) {
+            std::cerr << "Warning: Skipping malformed line: " << line << std::endl;
+            continue;
         }
+
+        // Create a unique key using FID and IID (if needed)
+        std::string key = fid + "_" + iid;
+
+        // Insert into the map
+        pheno[key] = phenotype;
     }
 
     file.close();
-    return group;
 }
 
 void check_match_samples(const std::unordered_map<std::string, int>& map, const std::vector<std::string>& keys) {

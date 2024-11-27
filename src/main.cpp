@@ -19,7 +19,7 @@ void print_help() {
 
 int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
-    std::string vcf_path, snarl_path, binary_path, quantitative_path, output_name;
+    std::string vcf_path, snarl_path, pheno_path, sex_path, prefix_name;
     bool show_help = false;
 
     // Parse arguments manually
@@ -90,8 +90,11 @@ int main(int argc, char* argv[]) {
     auto end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Time Matrix: " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
 
-    // slink : create the bim plink format
-    vcf_object.create_bim_bed(snarl, output_path);
+    // create the bim/bed plink format
+    const std::string output_bim = output_name + ".bim";
+    const std::string output_bed = output_name + ".bed";
+
+    vcf_object.create_bim_bed(snarl, output_bim, output_bed);
 
     end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Time P-value: " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
