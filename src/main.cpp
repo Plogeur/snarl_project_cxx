@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::filesystem::path output_dir = "output";
+    std::filesystem::path output_dir = "../output";
     std::filesystem::create_directory(output_dir);
     if (prefix_name.empty()) {prefix_name = "genotype";}
     const std::string output_name = (output_dir / prefix_name).string();
@@ -103,4 +103,4 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
-// ./snarl_project --vcf_path ../test/small_vcf.vcf --snarl ../test/list_snarl_short.txt --pheno ../test/pheno.txt -o genotype
+// ./slink --vcf_path /home/mbagarre/Bureau/snarl_data/simulation_1000vars_100samps/calls/merged_output.vcf --snarl /home/mbagarre/Bureau/snarl_data/simulation_1000vars_100samps/pg.snarl_netgraph.paths.tsv --pheno /home/mbagarre/Bureau/snarl_data/simulation_1000vars_100samps/phenotype_simulation_1000.plink_format.tsv -o genotype_simulation_1000

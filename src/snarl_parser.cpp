@@ -5,49 +5,6 @@ SnarlParser::SnarlParser(const std::string& vcf_path) : filename(vcf_path), file
     sampleNames = parseHeader();
 }
 
-void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
-                                  const std::string& output_bim, const std::string& output_bed) {
-    std::ofstream outbim(output_bim);
-    std::ofstream outbed(output_bed, std::ios::binary);  // Open BED file as binary
-    
-    const size_t allele_number = sampleNames.size()*2;
-
-    if (!outbim.is_open() || !outbed.is_open()) {
-        std::cerr << "Error opening output files!" << std::endl;
-        return;
-    }
-
-    // Iterate over each snarl
-    for (const auto& [snarl, list_snarl] : snarls) {
-
-        // Generate a genotype table for this snarl
-        std::vector<std::vector<int>> table = create_table(list_snarl);
-
-        // Process each snarl to write the corresponding BIM and BED entries
-        for (size_t snp_idx = 0; snp_idx < list_snarl.size(); ++snp_idx) {
-
-            std::string snp_id = list_snarl[snp_idx];
-            int chromosome = 1;
-            int position = 1 + snp_idx;
-            std::string allele1 = "A";
-            std::string allele2 = "T";
-
-            // Write the BIM file line for the SNP
-            outbim << chromosome << "\t" << snp_id << "\t0\t" << position
-                   << "\t" << allele1 << "\t" << allele2 << "\n";
-            
-            // Write the corresponding genotypes to the BED file
-            for (size_t snarl_list_idx = 0; snarl_list_idx < allele_number; ++snarl_list_idx) {
-                int genotype = table[snp_idx][snarl_list_idx];  // Get genotype (0, 1, or 2)
-                unsigned char encoded_genotype = static_cast<unsigned char>(genotype);
-                outbed.write(reinterpret_cast<char*>(&encoded_genotype), sizeof(unsigned char));
-            }
-        }
-    }
-    outbim.close();
-    outbed.close();
-}
-
 std::vector<std::vector<int>> SnarlParser::create_table(
     const std::vector<std::string>& list_path_snarl)
 {
@@ -63,6 +20,85 @@ std::vector<std::vector<int>> SnarlParser::create_table(
         small_grm.push_back(alleles);
     }
     return small_grm;
+}
+
+void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
+                                  const std::string& output_bim, const std::string& output_bed) {
+    std::ofstream outbim(output_bim);
+    std::ofstream outbed(output_bed, std::ios::binary);  // Open BED file as binary
+    
+    const size_t allele_number = sampleNames.size();  // Number of individuals
+
+    if (!outbim.is_open() || !outbed.is_open()) {
+        std::cerr << "Error opening output files!" << std::endl;
+        return;
+    }
+
+    // Write the 3-byte 'BED' header for the BED file
+    char bed_magic[] = {'B', 'E', 'D'};
+    outbed.write(bed_magic, 3);  // PLINK header
+    outbed.put(0);  // Padding byte to make it 4-byte aligned
+    
+    // Iterate over each snarl
+    for (const auto& [snarl, list_snarl] : snarls) {
+
+        int position = 0;
+        // Generate a genotype table for this snarl
+        std::vector<std::vector<int>> table = create_table(list_snarl);  // 2D vector, each row = SNP, each col = sample alleles
+
+        // Process each SNP in the snarl
+        for (size_t snp_idx = 0; snp_idx < list_snarl.size(); ++snp_idx) {
+
+            std::string snp_id = list_snarl[snp_idx];
+            int chromosome = 1;  // Placeholder for chromosome number
+            position += 1;  // Increment position for each SNP
+
+            std::string allele1 = "A";  // Placeholder for allele 1
+            std::string allele2 = "T";  // Placeholder for allele 2
+
+            // Write the BIM file line for the SNP
+            outbim << chromosome << "\t" << snp_id << "\t0\t" << position
+                   << "\t" << allele1 << "\t" << allele2 << "\n";
+            
+            // Write the genotypes for this SNP to the BED file
+            unsigned char packed_byte = 0;  // A byte to store genotypes of 4 individuals
+            int bit_pos = 0;
+
+            // Loop through each sample (pair of alleles per individual)
+            for (size_t snarl_list_idx = 0; snarl_list_idx < allele_number; ++snarl_list_idx) {
+                int allele1 = table[snp_idx][2 * snarl_list_idx];      // First allele for the individual at SNP
+                int allele2 = table[snp_idx][2 * snarl_list_idx + 1];  // Second allele for the individual at SNP
+
+                // Encode the genotype as a 2-bit value based on the alleles
+                unsigned char encoded_genotype = 0;
+
+                if (allele1 == allele2) {
+                    // Homozygous genotype (AA or aa)
+                    encoded_genotype = (allele1 == 0) ? 0b00 : 0b11;  // Example: 0 = AA, 1 = aa
+                } else {
+                    // Heterozygous genotype (Aa)
+                    encoded_genotype = 0b01;
+                }
+
+                // Shift the encoded genotype into the correct position in the byte
+                packed_byte |= (encoded_genotype << (bit_pos * 2));
+
+                // After 4 individuals, write the byte and reset the byte and bit position
+                if (++bit_pos == 4) {
+                    outbed.write(reinterpret_cast<char*>(&packed_byte), sizeof(unsigned char));
+                    packed_byte = 0;  // Reset the byte
+                    bit_pos = 0;      // Reset the bit position
+                }
+            }
+
+            // If there are fewer than 4 individuals, write the remaining packed byte
+            if (bit_pos > 0) {
+                outbed.write(reinterpret_cast<char*>(&packed_byte), sizeof(unsigned char));
+            }
+        }
+    }
+    outbim.close();
+    outbed.close();
 }
 
 std::vector<std::string> SnarlParser::parseHeader() {

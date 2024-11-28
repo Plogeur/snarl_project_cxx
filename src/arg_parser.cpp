@@ -12,7 +12,15 @@ void parse_pheno(const std::string &pheno_path, std::unordered_map<std::string, 
     }
 
     std::string line;
+    bool is_header = true;
+
     while (std::getline(file, line)) {
+
+        if (is_header) {
+            is_header = false;
+            continue;
+        }
+        
         std::istringstream iss(line);
         std::string fid, iid;
         int phenotype;
