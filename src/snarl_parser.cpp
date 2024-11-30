@@ -35,9 +35,8 @@ void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vect
     }
 
     // Write the 3-byte 'BED' header for the BED file
-    char bed_magic[] = {'B', 'E', 'D'};
-    outbed.write(bed_magic, 3);  // PLINK header
-    outbed.put(0);  // Padding byte to make it 4-byte aligned
+    char bed_magic[] = {0x6C, 0x1B, 0x01};  // PLINK header: 0x6C ('l'), 0x1B, 0x01 (snp-major mode)
+    outbed.write(bed_magic, 3);
     
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
@@ -82,9 +81,10 @@ void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vect
 
                 // Shift the encoded genotype into the correct position in the byte
                 packed_byte |= (encoded_genotype << (bit_pos * 2));
+                bit_pos++;
 
                 // After 4 individuals, write the byte and reset the byte and bit position
-                if (++bit_pos == 4) {
+                if (bit_pos == 4) {
                     outbed.write(reinterpret_cast<char*>(&packed_byte), sizeof(unsigned char));
                     packed_byte = 0;  // Reset the byte
                     bit_pos = 0;      // Reset the bit position
