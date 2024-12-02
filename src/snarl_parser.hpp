@@ -33,6 +33,7 @@ public:
     void create_bim_bed(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
                                   const std::string& output_bim, const std::string& output_bed);
     std::vector<std::vector<int>> create_table(const std::vector<std::string>& list_path_snarl);
+    std::vector<int> SnarlParser::create_table_short_path(const std::string& list_path_snarl);
 };
 
 void create_fam(const std::unordered_map<std::string, int>& sex, const std::unordered_map<std::string, int>& pheno, const std::string& output_path);

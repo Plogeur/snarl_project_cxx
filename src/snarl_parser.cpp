@@ -22,6 +22,19 @@ std::vector<std::vector<int>> SnarlParser::create_table(
     return small_grm;
 }
 
+std::vector<int> SnarlParser::create_table_short_path(
+    const std::string& list_path_snarl)
+{
+    std::vector<int> small_grm;
+    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
+
+    // Iterate over each path_snarl in column_headers
+    const std::string& path_snarl = list_path_snarl;
+    const size_t number_sample = sampleNames.size();
+    std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
+    return identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
+}
+
 void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
                                   const std::string& output_bim, const std::string& output_bed) {
     std::ofstream outbim(output_bim);
@@ -38,63 +51,61 @@ void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vect
     char bed_magic[] = {0x6C, 0x1B, 0x01};  // PLINK header: 0x6C ('l'), 0x1B, 0x01 (snp-major mode)
     outbed.write(bed_magic, 3);
     
+    int position = 0;
+
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
 
-        int position = 0;
+        if (list_snarl.size() > 2) {continue;} // avoid multiallelic var
+
         // Generate a genotype table for this snarl
-        std::vector<std::vector<int>> table = create_table(list_snarl);  // 2D vector, each row = SNP, each col = sample alleles
+        std::vector<int> table = create_table_short_path(list_snarl[0]);  // 2D vector, each row = SNP, each col = sample alleles
 
-        // Process each SNP in the snarl
-        for (size_t snp_idx = 0; snp_idx < list_snarl.size(); ++snp_idx) {
+        int chromosome = 1;  // Placeholder for chromosome number
+        position += 1;  // Increment position for each SNP
 
-            std::string snp_id = list_snarl[snp_idx];
-            int chromosome = 1;  // Placeholder for chromosome number
-            position += 1;  // Increment position for each SNP
+        std::string allele1 = "A";  // Placeholder for allele 1
+        std::string allele2 = "T";  // Placeholder for allele 2
 
-            std::string allele1 = "A";  // Placeholder for allele 1
-            std::string allele2 = "T";  // Placeholder for allele 2
+        // Write the BIM file line for the SNP
+        outbim << chromosome << "\t" << snarl << "\t0\t" << position
+                << "\t" << allele1 << "\t" << allele2 << "\n";
+        
+        // Write the genotypes for this SNP to the BED file
+        unsigned char packed_byte = 0;  // A byte to store genotypes of 4 individuals
+        int bit_pos = 0;
 
-            // Write the BIM file line for the SNP
-            outbim << chromosome << "\t" << snp_id << "\t0\t" << position
-                   << "\t" << allele1 << "\t" << allele2 << "\n";
-            
-            // Write the genotypes for this SNP to the BED file
-            unsigned char packed_byte = 0;  // A byte to store genotypes of 4 individuals
-            int bit_pos = 0;
+        // Loop through each sample (pair of alleles per individual)
+        for (size_t snarl_list_idx = 0; snarl_list_idx < allele_number; ++snarl_list_idx) {
+            int allele1 = table[2 * snarl_list_idx];      // First allele for the individual for the first paths
+            int allele2 = table[2 * snarl_list_idx + 1];  // Second allele for the individual at SNP
 
-            // Loop through each sample (pair of alleles per individual)
-            for (size_t snarl_list_idx = 0; snarl_list_idx < allele_number; ++snarl_list_idx) {
-                int allele1 = table[snp_idx][2 * snarl_list_idx];      // First allele for the individual at SNP
-                int allele2 = table[snp_idx][2 * snarl_list_idx + 1];  // Second allele for the individual at SNP
+            // Encode the genotype as a 2-bit value based on the alleles
+            unsigned char encoded_genotype = 0;
 
-                // Encode the genotype as a 2-bit value based on the alleles
-                unsigned char encoded_genotype = 0;
-
-                if (allele1 == allele2) {
-                    // Homozygous genotype (AA or aa)
-                    encoded_genotype = (allele1 == 0) ? 0b00 : 0b11;  // Example: 0 = AA, 1 = aa
-                } else {
-                    // Heterozygous genotype (Aa)
-                    encoded_genotype = 0b01;
-                }
-
-                // Shift the encoded genotype into the correct position in the byte
-                packed_byte |= (encoded_genotype << (bit_pos * 2));
-                bit_pos++;
-
-                // After 4 individuals, write the byte and reset the byte and bit position
-                if (bit_pos == 4) {
-                    outbed.write(reinterpret_cast<char*>(&packed_byte), sizeof(unsigned char));
-                    packed_byte = 0;  // Reset the byte
-                    bit_pos = 0;      // Reset the bit position
-                }
+            if (allele1 == allele2) {
+                // Homozygous genotype (AA or aa)
+                encoded_genotype = (allele1 == 0) ? 0b00 : 0b11;  // Example: 0 = AA, 1 = aa
+            } else {
+                // Heterozygous genotype (Aa)
+                encoded_genotype = 0b01;
             }
 
-            // If there are fewer than 4 individuals, write the remaining packed byte
-            if (bit_pos > 0) {
+            // Shift the encoded genotype into the correct position in the byte
+            packed_byte |= (encoded_genotype << (bit_pos * 2));
+            bit_pos++;
+
+            // After 4 individuals, write the byte and reset the byte and bit position
+            if (bit_pos == 4) {
                 outbed.write(reinterpret_cast<char*>(&packed_byte), sizeof(unsigned char));
+                packed_byte = 0;  // Reset the byte
+                bit_pos = 0;      // Reset the bit position
             }
+        }
+
+        // If there are fewer than 4 individuals, write the remaining packed byte
+        if (bit_pos > 0) {
+            outbed.write(reinterpret_cast<char*>(&packed_byte), sizeof(unsigned char));
         }
     }
     outbim.close();
