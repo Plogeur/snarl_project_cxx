@@ -1,17 +1,4 @@
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <numeric>
-#include <unordered_map>
-#include <functional>
-#include <iostream>
-#include <chrono>
-#include <cassert>
-#include <regex>
-#include <stdexcept>
-#include <utility>
-#include <bdsg/internal/packed_graph.hpp>
-#include <bdsg/snarl_distance_index.hpp>
+#include "list_snarl_paths.hpp"
 
 using namespace std;
 using namespace bdsg;
