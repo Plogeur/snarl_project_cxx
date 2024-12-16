@@ -14,7 +14,7 @@ usage :
 Stoat branch is a stoat python implementation, the goal is to out perform python implementation.
 
 usage : 
-./slink --vcf_path <vcf_path> --snarl <list_path_snarl> --pheno <pheno> -o <output_dir>
+./stoat --vcf_path <vcf_path> --snarl <list_path_snarl> -b <pheno> -o <output_dir>
 
 ## Benchmarking
 Performance comparison between the **C++ snarl_project** and the **Python3 snarl_project**:
