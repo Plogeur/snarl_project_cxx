@@ -7,8 +7,14 @@ By focusing on these snarl structures, snarl_project_cxx allows researchers to i
 ## Main branch
 Main branch is a fusion of stoat and plink implementation, the goal is to create a plink format using pangenome paths.
 
+usage : 
+./slink --vcf_path <vcf_path> --snarl <list_path_snarl> --pheno <pheno> -o <output_dir>
+
 ## Stoat branch
 Stoat branch is a stoat python implementation, the goal is to out perform python implementation.
+
+usage : 
+./slink --vcf_path <vcf_path> --snarl <list_path_snarl> --pheno <pheno> -o <output_dir>
 
 ## Benchmarking
 Performance comparison between the **C++ snarl_project** and the **Python3 snarl_project**:
